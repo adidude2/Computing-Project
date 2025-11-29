@@ -7,10 +7,13 @@ Created on Mon Oct 27 15:34:16 2025
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+from matplotlib.cm import ScalarMappable
+from matplotlib.colors import LinearSegmentedColormap
 import scipy.integrate as integrate
 import matplotlib.animation as animation
 import pandas as pd
 import datetime
+import matplotlib.gridspec as gridspec
 
 df = pd.read_excel(r"C:\Users\adidu\Documents\Work stuff\Year 3\Computing Project\Stuff.xlsx")
 
@@ -20,9 +23,9 @@ Particles = df['Particle Number (N)'].to_numpy()
 #print(array_all)
 
 
-dt = datetime.timedelta(hours=1).total_seconds()
-T = 365 * 60 * 60 * 24
-TotT = T / dt
+#dt = datetime.timedelta(hours=1).total_seconds()
+#T = 365 * 60 * 60 * 24
+#TotT = T / dt
 #print(f'New one {TotT}' )
 
 
@@ -53,7 +56,6 @@ def ForceCalc(m1,m2,x1,y1,x2,y2):
     Fy = G * m1 * m2 * dy / r3
     return Fx, Fy
 
-print()
 
 def ForceIter(arrx,arry,x):
     array_Fx = np. zeros((N, N))
@@ -89,7 +91,7 @@ def AccelCalc(arrx,arry,x,t):
     return dvx, dvy
 
 
-def COMCalc():  #Works out Centre of mass between two particles ONLY WORKS WITH 2 BODIES
+def COMCalc():
     ms = array_all[:,1]
     xs = array_all[:,2]
     ys = array_all[:,3]
@@ -101,8 +103,9 @@ def COMCalc():  #Works out Centre of mass between two particles ONLY WORKS WITH 
         Sums[i] = ms[i] * ys[i]   
     COMy = (np.sum(Sums))/(np.sum(ms))
     return COMx, COMy
+    #Works out Centre of mass between two particles ONLY WORKS WITH 2 BODIES BECAUSE CENTRE OF MASS CHANGES WITH 3 BODIES
     
-a,b = COMCalc()
+#a,b = COMCalc()
 #print(a, b)
     
 def firstvel(T):
@@ -127,9 +130,6 @@ def firstvel(T):
        #Fvel1[i] = (xs[i] - A) * 2 * np.pi/(365*60*60*24)
     return Fvel2 #ONLY WORKS IN THE SUN AND EARTH SYSTEM AND MAYBE JUPITER
     
-
-
-#print(firstvel())
 
 def InitVelCalc(T, t):
     a = firstvel(T)
@@ -175,7 +175,7 @@ def BigFunc(T, t):
             Ymatrix[i+1,j] = Ymatrix[i,j] + (VYmatrix[i+1,j] * t)
     return VXmatrix, VYmatrix, Xmatrix, Ymatrix, Eradius
 
-Vx, Vy, X, Y, R = BigFunc(TotT, dt)
+#Vx, Vy, X, Y, R = BigFunc(TotT, dt)
 
 
 
@@ -183,6 +183,28 @@ def dtvary():
     times = np.array([20, 30, 40, 50, 60])
     Y = len(times)
     fig, axes = plt.subplots(1, 2, figsize=(10, 5))
+    cmap = LinearSegmentedColormap.from_list("orange_black", ["orange", "black"])
+    t = np.linspace(0, 0.5, Y)
+    for ax in axes:
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+
+    for i in range(0,Y):
+        dt = datetime.timedelta(minutes=int(times[i])).total_seconds()
+        color = cmap(t[-1-i])
+        T = 365 * 60 * 60 * 24
+        TotT = T / dt
+        Vx, Vy, X, Y, R = BigFunc(TotT, dt)
+        x = np.linspace(0, T, len(R))
+        p = times[i]
+        axes[1].plot(x , R,label = f'dt = {p} mins')
+        
+def dtvaryadv():
+    #times = np.array([20, 30, 40, 50, 60])
+    times = np.arange(20,1000,10)
+    Y = len(times)
+    fig, axes = plt.subplots(1, 2, figsize=(15, 5))
+    Maxes = np.zeros(Y)
     for ax in axes:
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
@@ -194,7 +216,9 @@ def dtvary():
         Vx, Vy, X, Y, R = BigFunc(TotT, dt)
         x = np.linspace(0, T, len(R))
         p = times[i]
-        axes[1].plot(x , R, label = f'dt = {p} mins')
+        #axes[1].plot(x , R,label = f'dt = {p} mins')
+        Maxes[i] = max(R)
+    axes[1].plot(times, Maxes)
     
     
     axes[0].plot(X[:,0], Y[:,0], label = 'Sun')
@@ -221,14 +245,82 @@ def dtvary():
     frame.set_linewidth(1.5)      # normal border thickness
     frame.set_alpha(0.2)
     plt.show()
-    plt.savefig(r'C:\Users\adidu\Documents\Work stuff\Year 3\Computing Project\Old Python Files\Earth Orbit Deviation.png', transparent=True)
+    #plt.savefig(r'C:\Users\adidu\Documents\Work stuff\Year 3\Computing Project\Old Python Files\Earth Orbit Deviation.png', transparent=True)
 
+def EnergyPlot():
+    fig, axes = plt.subplots(2, 1, figsize=(15, 5))
+    ms = array_all[:,1]
+    dt = datetime.timedelta(minutes=int(60)).total_seconds()
+    T = 365 * 60 * 60 * 24
+    TotT = T / dt
+    Vx, Vy, X, Y, R = BigFunc(TotT, dt)
+    halfposX = np.empty((len(X)-1, N))
+    halfposY = np.empty((len(X)-1, N))
+    #Uarr = np.empty(N*(N-1)/2)
+    Utotarr = np.empty(len(halfposX))
+    KEtotarr = np.empty(len(halfposX))
+    
+    for i in range (0,len(X)-1):
+        Utot = 0
+        for j in range (0,N):
+            halfposX[i,j] = (X[i,j] + X[i+1,j]) / 2
+            halfposY[i,j] = (Y[i,j] + Y[i+1,j]) / 2
+        for l in range (0,N):
+            for k in range(l+1,N):
+                u = -G * (ms[l]*ms[k])/np.sqrt((halfposX[i,l] - halfposX[i,k])**2 + (halfposY[i,l] - halfposY[i,k])**2)
+                Utot = Utot + u
+        Utotarr[i] = Utot
+        Ktot = 0
+        for j in range (0,N):
+            k = 1/2 * ms[j] * (Vx[i+1,j]**2 + Vy[i+1,j]**2)
+            Ktot = Ktot + k
+        KEtotarr[i] = Ktot
+    Uavg = np.mean(Utotarr)
+    Kavg = np.mean(KEtotarr)
+    du = np.empty(len(halfposX))
+    dk = np.empty(len(halfposX))
+    for i in range (0, len(Utotarr)):
+        du[i] = Utotarr[i] - Uavg
+        dk[i] = KEtotarr[i] - Kavg
+        
+    x = np.linspace(0, T, len(Utotarr))
+    #axes[0] = fig.add_axes([0.1, 0.35, 0.85, 0.6])
+    fig = plt.figure(figsize=(12, 5))
+    gs = gridspec.GridSpec(2, 1, height_ratios=[3, 1])  # top 3x taller
 
-dtvary()
+    axes[0] = fig.add_subplot(gs[0])
+    axes[1] = fig.add_subplot(gs[1])
+    axes[0].plot(x, Utotarr)
+    axes[0].plot(x, KEtotarr)
+    axes[1].plot(x,du)
+    axes[1].plot(x,dk)
+    
+    #axes[0].plot(X[:,0], Y[:,0], label = 'Sun')
+    #axes[0].plot(X[:,1], Y[:,1], label = 'Earth')
+    #axes[0].scatter(*COMCalc(), color='red', marker='x', label='COM')
+    #axes[0].set_xlabel('x position (m)')
+    #axes[0].set_ylabel('y position (m)')
+    #axes[0].legend(loc='upper center', bbox_to_anchor=(0.8, 1.1))
+    #leg = axes[0].legend(loc='upper center', bbox_to_anchor=(0.8, 1.1))
+    #frame = leg.get_frame()
+    #frame.set_facecolor("none")   # transparent background
+    #frame.set_edgecolor("black")  # visible border
+    #frame.set_linewidth(1.5)      # normal border thickness
+    #frame.set_alpha(0.2) 
+    #axes[0].axis('equal')
+    #    for j in range (0,N):
+    return Uavg, Kavg
+            
+            
+    #return(halfposX,halfposY, TotT)
+U,K = EnergyPlot()
+print(U,K)
 
+    
 
+#dtvaryadv()
 
-
+print(len(np.arange(20,1000,10)))
 
 
 #print(Vx, Vy, X, Y)
@@ -253,5 +345,11 @@ dtvary()
 #axes[1].legend()
 #plt.tight_layout()
 #plt.show()
+
+#DO DTS DIFFERENCES BY A FACTOR OF 2
+#DO A PLOT OF EARTH COM DISTANCE WITH RESPECT TO JUPITER
+#add a zoom in of the sun orbit on my earth jupiter plot
+#
+#
     
     

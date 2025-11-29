@@ -344,3 +344,29 @@ runcell(0, 'C:/Users/adidu/.spyder-py3/Computing Project Core.py')
 %runcell -i 0 'C:/Users/adidu/.spyder-py3/Computing Project Core.py'
 %runcell -i 0 C:/Users/adidu/.spyder-py3/untitled0.py
 %runcell -i 0 'C:/Users/adidu/.spyder-py3/Computing Project Core.py'
+
+## ---(Wed Nov 19 11:47:50 2025)---
+%runcell -i 0 'C:/Users/adidu/.spyder-py3/Computing Project Core.py'
+
+## ---(Wed Nov 19 11:54:13 2025)---
+%runcell -i 0 'C:/Users/adidu/.spyder-py3/Computing Project Core.py'
+%runfile 'C:/Users/adidu/.spyder-py3/Computing Project Core.py' --wdir
+%runcell -i 0 'C:/Users/adidu/.spyder-py3/Computing Project Core.py'
+%runcell -i 0 'C:/Users/adidu/Documents/Waveforms/Logging/New Fan Data/Fan_analysis_checker.py'
+%runfile 'C:/Users/adidu/Documents/Waveforms/Logging/New Fan Data/Fan_analysis_checker.py' --wdir
+%runcell -i 0 'C:/Users/adidu/Documents/Waveforms/Logging/New Fan Data/Fan_analysis_checker.py'
+
+## ---(Fri Nov 21 14:22:40 2025)---
+%runcell -i 0 'C:/Users/adidu/Documents/Waveforms/Logging/Wind Speed Logs/Fan_speed.py'
+
+## ---(Wed Nov 26 11:47:51 2025)---
+%runcell -i 0 'C:/Users/adidu/.spyder-py3/Computing Project Core.py'
+
+## ---(Thu Nov 27 11:43:41 2025)---
+%runcell -i 0 'C:/Users/adidu/.spyder-py3/Computing Project Core.py'
+
+## ---(Fri Nov 28 10:24:21 2025)---
+%runcell -i 0 'C:/Users/adidu/.spyder-py3/Computing Project Core.py'
+%runcell -i 0 'C:/Users/adidu/Documents/Waveforms/Logging/Wind Speed Logs/Fan_speed.py'
+%runcell -i 0 'C:/Users/adidu/.spyder-py3/Team Project Analysis.py'
+%runcell -i 0 C:/Users/adidu/.spyder-py3/untitled0.py
