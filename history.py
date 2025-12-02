@@ -370,3 +370,23 @@ runcell(0, 'C:/Users/adidu/.spyder-py3/Computing Project Core.py')
 %runcell -i 0 'C:/Users/adidu/Documents/Waveforms/Logging/Wind Speed Logs/Fan_speed.py'
 %runcell -i 0 'C:/Users/adidu/.spyder-py3/Team Project Analysis.py'
 %runcell -i 0 C:/Users/adidu/.spyder-py3/untitled0.py
+
+## ---(Mon Dec  1 14:18:05 2025)---
+%runfile C:/Users/adidu/.spyder-py3/untitled0.py --wdir
+%runcell -i 0 C:/Users/adidu/.spyder-py3/untitled0.py
+%runfile C:/Users/adidu/.spyder-py3/untitled0.py --wdir
+%runcell -i 0 C:/Users/adidu/.spyder-py3/untitled0.py
+%runfile C:/Users/adidu/.spyder-py3/untitled0.py --wdir
+%runcell -i 0 C:/Users/adidu/.spyder-py3/untitled0.py
+
+## ---(Mon Dec  1 16:52:55 2025)---
+%runfile C:/Users/adidu/.spyder-py3/untitled0.py --wdir
+%runcell -i 0 'C:/Users/adidu/.spyder-py3/Computing Project Core.py'
+%runfile 'C:/Users/adidu/.spyder-py3/Computing Project Core.py' --wdir
+%runcell -i 0 'C:/Users/adidu/.spyder-py3/Computing Project Core.py'
+%runfile 'C:/Users/adidu/.spyder-py3/Computing Project Core.py' --wdir
+%runcell -i 0 'C:/Users/adidu/.spyder-py3/Computing Project Core.py'
+%runfile 'C:/Users/adidu/.spyder-py3/Computing Project Core.py' --wdir
+%runcell -i 0 'C:/Users/adidu/.spyder-py3/Computing Project Core.py'
+%runfile 'C:/Users/adidu/.spyder-py3/Computing Project Core.py' --wdir
+%runcell -i 0 'C:/Users/adidu/.spyder-py3/Computing Project Core.py'

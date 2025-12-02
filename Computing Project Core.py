@@ -23,9 +23,9 @@ Particles = df['Particle Number (N)'].to_numpy()
 #print(array_all)
 
 
-#dt = datetime.timedelta(hours=1).total_seconds()
-#T = 365 * 60 * 60 * 24
-#TotT = T / dt
+odt = datetime.timedelta(hours=1).total_seconds()
+oT = 365 * 60 * 60 * 24
+oTotT = oT / odt
 #print(f'New one {TotT}' )
 
 
@@ -91,16 +91,16 @@ def AccelCalc(arrx,arry,x,t):
     return dvx, dvy
 
 
-def COMCalc():
+def COMCalc(arrx,arry,t):
     ms = array_all[:,1]
     xs = array_all[:,2]
     ys = array_all[:,3]
     Sums = np. zeros(N)
     for i in range (0,N):
-        Sums[i] = ms[i] * xs[i]
+        Sums[i] = ms[i] * arrx[t,i]
     COMx = (np.sum(Sums))/(np.sum(ms))
     for i in range (0,N):
-        Sums[i] = ms[i] * ys[i]   
+        Sums[i] = ms[i] * arry[t,i]   
     COMy = (np.sum(Sums))/(np.sum(ms))
     return COMx, COMy
     #Works out Centre of mass between two particles ONLY WORKS WITH 2 BODIES BECAUSE CENTRE OF MASS CHANGES WITH 3 BODIES
@@ -120,7 +120,7 @@ def firstvel(T):
     
     ms = array_all[:,1]
     xs = array_all[:,2]
-    A,B = COMCalc()
+    A,B = COMCalc(Xmatrix,Ymatrix,0)
     Fvel1 = np. zeros(N)
     Fvel2 = np. zeros(N)
     for i in range (0,N):
@@ -132,12 +132,17 @@ def firstvel(T):
     
 
 def InitVelCalc(T, t):
+    Xmatrix = np.empty((int(T), N))
+    Ymatrix = np.empty((int(T), N))
+    for i in range (0,N):
+        Xmatrix[0,i] = array_all[i,2]
+        Ymatrix[0,i] = array_all[i,3]
     a = firstvel(T)
     initvx = np. zeros(N)
     initvy = np. zeros(N)
     xs = array_all[:,2]
     ys = array_all[:,3]
-    A,B = COMCalc()
+    A,B = COMCalc(Xmatrix,Ymatrix,0)
     delthetas = np. zeros(N)
     # This function is made assuming all objects start on the same plane
     for i in range (0,N):
@@ -158,7 +163,6 @@ def BigFunc(T, t):
     Eradius = np.zeros(int(T)-1)
     xs = array_all[:,2]
     a,b = InitVelCalc(T, t)
-    A,B = COMCalc()
     for i in range (0,N):
         Xmatrix[0,i] = array_all[i,2]
         Ymatrix[0,i] = array_all[i,3]
@@ -166,6 +170,7 @@ def BigFunc(T, t):
         VYmatrix[0,i] = b[i]
     
     for i in range (0,int(T-1)):
+        A,B = COMCalc(Xmatrix,Ymatrix, i)
         ax, ay = AccelCalc(Xmatrix, Ymatrix, i, t)
         Eradius[i] = (xs[1] - A) - np.sqrt((Xmatrix[i,1]- A)**2 + (Ymatrix[i,1]- B)**2)
         for j in range (0,N):
@@ -180,7 +185,7 @@ def BigFunc(T, t):
 
 
 def dtvary():
-    times = np.array([20, 30, 40, 50, 60])
+    times = np.array([60])
     Y = len(times)
     fig, axes = plt.subplots(1, 2, figsize=(10, 5))
     cmap = LinearSegmentedColormap.from_list("orange_black", ["orange", "black"])
@@ -192,12 +197,15 @@ def dtvary():
     for i in range(0,Y):
         dt = datetime.timedelta(minutes=int(times[i])).total_seconds()
         color = cmap(t[-1-i])
-        T = 365 * 60 * 60 * 24
+        T = 365 * 60 * 60 * 24 * 10
         TotT = T / dt
         Vx, Vy, X, Y, R = BigFunc(TotT, dt)
         x = np.linspace(0, T, len(R))
         p = times[i]
         axes[1].plot(x , R,label = f'dt = {p} mins')
+    axes[0].plot(X[:,0], Y[:,0], label = 'Sun')
+    axes[0].plot(X[:,1], Y[:,1], label = 'Earth')
+    axes[0].plot(X[:,2], Y[:,2], label = 'Jupiter')
         
 def dtvaryadv():
     #times = np.array([20, 30, 40, 50, 60])
@@ -286,12 +294,13 @@ def EnergyPlot():
     x = np.linspace(0, T, len(Utotarr))
     #axes[0] = fig.add_axes([0.1, 0.35, 0.85, 0.6])
     fig = plt.figure(figsize=(12, 5))
-    gs = gridspec.GridSpec(2, 1, height_ratios=[3, 1])  # top 3x taller
+    gs = gridspec.GridSpec(2, 1, height_ratios=[4, 1])  # top 3x taller
 
     axes[0] = fig.add_subplot(gs[0])
     axes[1] = fig.add_subplot(gs[1])
     axes[0].plot(x, Utotarr)
     axes[0].plot(x, KEtotarr)
+    axes[0] .xaxis.set_visible(False)
     axes[1].plot(x,du)
     axes[1].plot(x,dk)
     
@@ -313,14 +322,15 @@ def EnergyPlot():
             
             
     #return(halfposX,halfposY, TotT)
-U,K = EnergyPlot()
-print(U,K)
+#U,K = EnergyPlot()
+#print(U,K)
 
+Vx, Vy, X, Y, R = BigFunc(oTotT, odt)
     
-
+dtvary()
 #dtvaryadv()
 
-print(len(np.arange(20,1000,10)))
+#print(len(np.arange(20,1000,10)))
 
 
 #print(Vx, Vy, X, Y)
