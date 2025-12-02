@@ -18,7 +18,8 @@ import os
 #directory=os.listdir()
 #print(directory)
 
-df = pd.read_csv(r"C:\Users\adidu\Documents\Waveforms\Logging\Latest Fan Setting data\Rotating Fan\645 3 27 Spin.csv")
+df  = pd.read_csv(r"C:\Users\adidu\Documents\Waveforms\Logging\Latest Fan Setting data\Rotating Fan\645 3 27 Spin.csv")
+#df = pd.read_csv(r"C:\Users\adidu\Documents\Waveforms\Logging\Latest Fan Setting data\Rotating Fan\645 3 27 Spin.csv")
 print(df.head())
 array_all = df.to_numpy()
 plt.figure(figsize=(20, 5), dpi = 150)
