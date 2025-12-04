@@ -18,15 +18,29 @@ import os
 #directory=os.listdir()
 #print(directory)
 
-df  = pd.read_csv(r"C:\Users\adidu\Documents\Waveforms\Logging\Latest Fan Setting data\Rotating Fan\645 3 27 Spin.csv")
+
+df  = pd.read_csv(r"C:\Users\adidu\Documents\Code Stuff\Waveforms\Logging\Latest Fan Setting data\Rotating Fan\645 3 27 Spin.csv")
 #df = pd.read_csv(r"C:\Users\adidu\Documents\Waveforms\Logging\Latest Fan Setting data\Rotating Fan\645 3 27 Spin.csv")
+
+#df = pd.read_csv(r"C:\Users\adidu\Documents\Waveforms\Logging\Latest Fan Setting data\Rotating Fan\Trial Spin.csv")
 print(df.head())
+
+dt = 1.0 / 37   # in seconds
+t = np.arange(len(df)) * dt
+print(len(t))
+#print(len(array_all[:,1]))
 array_all = df.to_numpy()
-plt.figure(figsize=(20, 5), dpi = 150)
-plt.xlabel('Time (ms)')
+plt.figure(figsize=(30, 5), dpi = 100)
+#plt.spines['top'].set_visible(False)
+#plt.spines['right'].set_visible(False)
+plt.xlabel('Time (s)')
 plt.ylabel('Amplitude (V)')
-plt.plot(np.arange(len(array_all[:,1])), array_all[:,1])
+#np.arange(len(array_all[:,1]))
+plt.plot(t, array_all[:,1])
+ax = plt.gca()
+ax.spines['top'].set_visible(False)
+ax.spines['right'].set_visible(False)
 #print(np.arange(len(array_all[:,1])))
-plt.savefig(r'C:\Users\adidu\Documents\Waveforms\Logging\Latest Fan Setting data\Rotating Fan\Fan Oscillation graph', transparent=False)
+plt.savefig(r"C:\Users\adidu\Documents\Code Stuff\Waveforms\Logging\Latest Fan Setting data\Rotating Fan\Fan Oscillation graph Filled in.png", transparent=False)
 
 
