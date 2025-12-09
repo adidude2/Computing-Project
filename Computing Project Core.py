@@ -206,14 +206,14 @@ def dtvary():
         dt = datetime.timedelta(hours=int(times[i])).total_seconds()
         color = cmap(t[-1-i])
         T = 365 * 60 * 60 * 24 * 50
-        TotT = T / dt
+        TotT = int(T / dt)
         Vx, Vy, X, Y, R1, R2, R3, Em, Jm, Sm, t = BigFunc(int(TotT), dt)
         #Vx, Vy, X, Y, R1, R3, Em, Sm, t = BigFunc(int(TotT), dt)
         x = np.linspace(0, T, len(R1)) / (60*60*24*365)
         p = times[i]
         axes[1].plot(x , R1,label = 'Earth') #f'dt = {p} mins')
-        axes[1].plot(x , R3*4,label = 'Sun' ) #f'dt = {p} mins')
-        axes[1].plot(x , R2*4,label = 'Jupiter') #f'dt = {p} mins')
+        axes[1].plot(x , R3,label = 'Sun' ) #f'dt = {p} mins')
+        axes[1].plot(x , R2,label = 'Jupiter') #f'dt = {p} mins')
     axes[0].plot(X[:,1]/Au, Y[:,1]/Au)
     axes[0].plot(X[:,0]/Au, Y[:,0]/Au)
     #axes[0].plot(X[:,0]/1000, Y[:,0]/1000, color = "#ff7f0e")
@@ -256,7 +256,7 @@ def dtvaryadv():
     for i in range(0,Y):
         dt = datetime.timedelta(minutes=int(times[i])).total_seconds()
         T = 365 * 60 * 60 * 24 * 100
-        TotT = T / dt
+        TotT = int(T / dt)
         Vx, Vy, X, Y, R1, R2, R3, Em, Jm, Sm, t = BigFunc(TotT, dt)
         x = np.linspace(0, T, len(R1))
         p = times/(60*24)
@@ -295,11 +295,11 @@ def dtvaryadv():
     return Avgs
 
 def EnergyPlot():
-    fig, axes = plt.subplots(2, 1, figsize=(15, 5))
+    fig, axes = plt.subplots(2, 1, figsize=(20, 5))
     ms = array_all[:,1]
-    dt = datetime.timedelta(minutes=int(60)).total_seconds()
-    T = 365 * 60 * 60 * 24
-    TotT = T / dt
+    dt = datetime.timedelta(hours=int(24)).total_seconds()
+    T = 365 * 60 * 60 * 24 * 100
+    TotT = int(T / dt)
     Vx, Vy, X, Y, R1, R2, R3, Em, Jm, Sm, t = BigFunc(TotT, dt)
     halfposX = np.empty((len(X)-1, N))
     halfposY = np.empty((len(X)-1, N))
@@ -322,26 +322,37 @@ def EnergyPlot():
             k = 1/2 * ms[j] * (Vx[i+1,j]**2 + Vy[i+1,j]**2)
             Ktot = Ktot + k
         KEtotarr[i] = Ktot
+    Etot = Utotarr + KEtotarr
     Uavg = np.mean(Utotarr)
     Kavg = np.mean(KEtotarr)
+    Tavg = np.mean(Etot)
     du = np.empty(len(halfposX))
     dk = np.empty(len(halfposX))
+    dTot = np.empty(len(halfposX))
     for i in range (0, len(Utotarr)):
         du[i] = Utotarr[i] - Uavg
         dk[i] = KEtotarr[i] - Kavg
+        dTot[i] = Etot[i] / Tavg
         
-    x = np.linspace(0, T, len(Utotarr))
+    x = np.linspace(0, T, len(Utotarr))/(60*60*24*365)
     #axes[0] = fig.add_axes([0.1, 0.35, 0.85, 0.6])
-    fig = plt.figure(figsize=(12, 5))
-    gs = gridspec.GridSpec(2, 1, height_ratios=[4, 1])  # top 3x taller
+    fig = plt.figure(figsize=(15, 10))
+    gs = gridspec.GridSpec(2, 1, height_ratios=[4, 2])  # top 3x taller
 
     axes[0] = fig.add_subplot(gs[0])
     axes[1] = fig.add_subplot(gs[1])
-    axes[0].plot(x, Utotarr)
-    axes[0].plot(x, KEtotarr)
+    axes[0].plot(x, Utotarr/1_000_000, label = 'Potential Energy')
+    axes[0].plot(x, KEtotarr/1_000_000, label = 'Kinetic Energy')
+    axes[0].plot(x, Etot/1_000_000, label = 'Total Energy')
     axes[0] .xaxis.set_visible(False)
-    axes[1].plot(x,du)
-    axes[1].plot(x,dk)
+    axes[1].plot(x,du, label = 'Potential Energy')
+    axes[1].plot(x,dk, label = 'Kinetic Energy')
+    axes[1].plot(x,dTot, label = 'Total Energy')
+    axes[0].set_ylabel('Energy(MJ)')
+    axes[1].set_ylabel('Energy Deviation from mean')
+    axes[1].set_xlabel('Time (Years)')
+    axes[0].ticklabel_format(useMathText=True)
+    axes[1].ticklabel_format(useMathText=True)
     
     #axes[0].plot(X[:,0], Y[:,0], label = 'Sun')
     #axes[0].plot(X[:,1], Y[:,1], label = 'Earth')
@@ -357,15 +368,15 @@ def EnergyPlot():
     #frame.set_alpha(0.2) 
     #axes[0].axis('equal')
     #    for j in range (0,N):
-    return Uavg, Kavg
+    return Uavg, Kavg, Tavg
             
             
     #return(halfposX,halfposY, TotT)
-#U,K = EnergyPlot()
-#print(U,K)
+U, K, E = EnergyPlot()
+print(U, K, E)
 
     
-dtvary()
+#dtvary()
 #A = dtvaryadv()
 times = np.arange(720,100_000,500)
 arr = np.array([7])

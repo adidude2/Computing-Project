@@ -456,3 +456,18 @@ runcell(0, 'C:/Users/adidu/.spyder-py3/Computing Project Core.py')
 %runcell -i 0 'C:/Users/adidu/.spyder-py3/Computing Project Core.py'
 %runfile 'C:/Users/adidu/.spyder-py3/Computing Project Core.py' --wdir
 %runcell -i 0 'C:/Users/adidu/.spyder-py3/Computing Project Core.py'
+
+## ---(Tue Dec  9 09:56:07 2025)---
+%runcell -i 0 'C:/Users/adidu/.spyder-py3/Computing Project Core.py'
+%runfile 'C:/Users/adidu/.spyder-py3/Computing Project Core.py' --wdir
+%runcell -i 0 'C:/Users/adidu/.spyder-py3/Computing Project Core.py'
+%runfile 'C:/Users/adidu/.spyder-py3/Computing Project Core.py' --wdir
+%runcell -i 0 'C:/Users/adidu/.spyder-py3/Computing Project Core.py'
+%runfile 'C:/Users/adidu/.spyder-py3/Computing Project Core.py' --wdir
+%runcell -i 0 'C:/Users/adidu/.spyder-py3/Computing Project Core.py'
+%runfile 'C:/Users/adidu/.spyder-py3/Computing Project Core.py' --wdir
+%runcell -i 0 'C:/Users/adidu/.spyder-py3/Computing Project Core.py'
+%runfile 'C:/Users/adidu/.spyder-py3/Computing Project Core.py' --wdir
+%runcell -i 0 'C:/Users/adidu/.spyder-py3/Computing Project Core.py'
+%runfile 'C:/Users/adidu/.spyder-py3/Computing Project Core.py' --wdir
+%runcell -i 0 'C:/Users/adidu/.spyder-py3/Computing Project Core.py'
