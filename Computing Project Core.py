@@ -24,12 +24,12 @@ Particles = df['Particle Number (N)'].to_numpy()
 
 
 odt = datetime.timedelta(hours=1).total_seconds()
-oT = 365 * 60 * 60 * 24
+oT = 365 * 60 * 60 * 24 * 12
 oTotT = oT / odt
 #print(f'New one {TotT}' )
 
 N = len(Particles)
-
+Au = array_all[1,2]
 
 #print(array_all[:,1])
 
@@ -163,7 +163,6 @@ def BigFunc(T, t):
         VXmatrix[0,i] = a[i]
         VYmatrix[0,i] = b[i]
     A1,B1 = COMCalc(Xmatrix,Ymatrix, 0)
-    initial_earth_radius = np.hypot(Xmatrix[0,1]-A1, Ymatrix[0,1]-B1)
     for i in range (0,int(T-1)):
         A,B = COMCalc(Xmatrix,Ymatrix, i)
         ax, ay = AccelCalc(Xmatrix, Ymatrix, i, t)
@@ -187,15 +186,16 @@ def BigFunc(T, t):
     test = Sradius[0]
     #test = xs[1]
     return VXmatrix, VYmatrix, Xmatrix, Ymatrix, Eradius, Jradius, Sradius, Ermean, Jrmean, Srmean, test
+    #return VXmatrix, VYmatrix, Xmatrix, Ymatrix, Eradius, Sradius, Ermean, Srmean, test
 
-Vx, Vy, X, Y, R1, R2, R3, Em, Jm, Sm, t = BigFunc(oTotT, odt)
-print(t)
+#Vx, Vy, X, Y, R1, R2, R3, Em, Jm, Sm, t = BigFunc(oTotT, odt)
+#print(t)
 
 
 def dtvary():
     times = np.array([12])
     Y = len(times)
-    fig, axes = plt.subplots(1, 2, figsize=(15, 5))
+    fig, axes = plt.subplots(1, 2, figsize=(21, 7))
     cmap = LinearSegmentedColormap.from_list("orange_black", ["orange", "black"])
     t = np.linspace(0, 0.5, Y)
     for ax in axes:
@@ -208,16 +208,21 @@ def dtvary():
         T = 365 * 60 * 60 * 24 * 50
         TotT = T / dt
         Vx, Vy, X, Y, R1, R2, R3, Em, Jm, Sm, t = BigFunc(int(TotT), dt)
+        #Vx, Vy, X, Y, R1, R3, Em, Sm, t = BigFunc(int(TotT), dt)
         x = np.linspace(0, T, len(R1)) / (60*60*24*365)
         p = times[i]
-        #axes[1].plot(x , R1,label = 'Earth') #f'dt = {p} mins')
-        axes[1].plot(x , R3,label = 'Sun' ) #f'dt = {p} mins')
-        axes[1].plot(x , R2,label = 'Jupiter') #f'dt = {p} mins')
-    axes[0].plot(X[:,1], Y[:,1], label = 'Earth')
-    axes[0].plot(X[:,0], Y[:,0], label = 'Sun')
-    axes[0].plot(X[:,2], Y[:,2], label = 'Jupiter')
-    axes[0].set_xlabel('x position (m)')
-    axes[0].set_ylabel('y position (m)')
+        axes[1].plot(x , R1,label = 'Earth') #f'dt = {p} mins')
+        axes[1].plot(x , R3*4,label = 'Sun' ) #f'dt = {p} mins')
+        axes[1].plot(x , R2*4,label = 'Jupiter') #f'dt = {p} mins')
+    axes[0].plot(X[:,1]/Au, Y[:,1]/Au)
+    axes[0].plot(X[:,0]/Au, Y[:,0]/Au)
+    #axes[0].plot(X[:,0]/1000, Y[:,0]/1000, color = "#ff7f0e")
+    axes[0].plot(X[:,2]/Au, Y[:,2]/Au)
+    axes[0].plot(X[0,1]/Au, Y[0,1]/Au, marker='o', label = 'Earth', color = "#2178b4", markeredgecolor='black')
+    axes[0].plot(X[0,0]/Au, Y[0,0]/Au, marker='o', label = 'Sun', color = "#ff7f0e", markeredgecolor='black')
+    axes[0].plot(X[0,2]/Au, Y[0,2]/Au, marker='o', label = 'Jupiter', color = "#37a33c", markeredgecolor='black')
+    axes[0].set_xlabel('x position (Au)')
+    axes[0].set_ylabel('y position (Au)')
     axes[1].set_xlabel('Time (years)')
     axes[1].set_ylabel('Relative distance From COM')
     axes[0].legend(loc='upper center', bbox_to_anchor=(0.8, 1.1))
@@ -234,7 +239,7 @@ def dtvary():
     frame.set_edgecolor("black")  # visible border
     frame.set_linewidth(1.5)      # normal border thickness
     frame.set_alpha(0.2)
-    #plt.savefig(r'C:\Users\adidu\Documents\Work stuff\Year 3\Computing Project\Old Python Files\Relative distance From COM.png', transparent=True)
+    plt.savefig(r'C:\Users\adidu\Documents\Work stuff\Year 3\Computing Project\Old Python Files\All 3 bodies LOOKING GOODDDD.png', transparent=True)
     avg = np.mean(R1)
     return avg
         
@@ -260,7 +265,7 @@ def dtvaryadv():
         Avgs[i] = Em
     axes[1].loglog(p, Avgs)
     
-    
+    Vx, Vy, X, Y, R1, R2, R3, Em, Jm, Sm, t = BigFunc(oTotT, odt)
     axes[0].plot(X[:,0], Y[:,0], label = 'Sun')
     axes[0].plot(X[:,1], Y[:,1], label = 'Earth')
     axes[0].plot(X[:,2], Y[:,2], label = 'Jupiter')
@@ -360,8 +365,10 @@ def EnergyPlot():
 #print(U,K)
 
     
-#dtvary()
-A = dtvaryadv()
+dtvary()
+#A = dtvaryadv()
+times = np.arange(720,100_000,500)
+arr = np.array([7])
 times = np.arange(720,100_000,500)
 Y = len(times)
 print(Y)
