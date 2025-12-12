@@ -177,7 +177,7 @@ def BigFunc(T, t):
             VYmatrix[i+1,j] = VYmatrix[i,j] + ay[j]
             Xmatrix[i+1,j] = Xmatrix[i,j] + (VXmatrix[i+1,j] * t)
             Ymatrix[i+1,j] = Ymatrix[i,j] + (VYmatrix[i+1,j] * t)
-    Ermean = (np.mean(Eradius)/(xs[1]-A1))-1
+    Ermean = (np.mean(Eradius)-(xs[1]-A1))/(xs[1]-A1)
     Jrmean = (np.mean(Jradius)/(xs[2]-A1))-1
     Srmean = (-np.mean(Sradius)/(xs[0]-A1))-1
     Eradius = (Eradius / (xs[1]-A1))-1
@@ -193,61 +193,63 @@ def BigFunc(T, t):
 
 
 def dtvary():
-    times = np.array([12])
+    times = np.array([1])
     Y = len(times)
-    fig, axes = plt.subplots(1, 2, figsize=(21, 7))
-    cmap = LinearSegmentedColormap.from_list("orange_black", ["orange", "black"])
-    t = np.linspace(0, 0.5, Y)
-    for ax in axes:
-        ax.spines['top'].set_visible(False)
-        ax.spines['right'].set_visible(False)
-
+    #fig, axes = plt.subplots(1, 2, figsize=(21, 7))
+    fig = plt.figure(figsize=(9, 4))
+    #fig, axes = plt.subplots(2, 1, figsize=(20, 10))
+    plt.subplots_adjust(hspace=0.4)
+    #for ax in axes:
+        #ax.spines['top'].set_visible(False)
+        #ax.spines['right'].set_visible(False)
+    ax = plt.gca()
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
     for i in range(0,Y):
-        dt = datetime.timedelta(hours=int(times[i])).total_seconds()
-        color = cmap(t[-1-i])
-        T = 365 * 60 * 60 * 24 * 50
+        dt = datetime.timedelta(days=int(times[i])).total_seconds()
+        T = 365 * 60 * 60 * 24 * 36
         TotT = int(T / dt)
         Vx, Vy, X, Y, R1, R2, R3, Em, Jm, Sm, t = BigFunc(int(TotT), dt)
         #Vx, Vy, X, Y, R1, R3, Em, Sm, t = BigFunc(int(TotT), dt)
         x = np.linspace(0, T, len(R1)) / (60*60*24*365)
         p = times[i]
-        axes[1].plot(x , R1,label = 'Earth') #f'dt = {p} mins')
-        axes[1].plot(x , R3,label = 'Sun' ) #f'dt = {p} mins')
-        axes[1].plot(x , R2,label = 'Jupiter') #f'dt = {p} mins')
-    axes[0].plot(X[:,1]/Au, Y[:,1]/Au)
-    axes[0].plot(X[:,0]/Au, Y[:,0]/Au)
-    #axes[0].plot(X[:,0]/1000, Y[:,0]/1000, color = "#ff7f0e")
-    axes[0].plot(X[:,2]/Au, Y[:,2]/Au)
-    axes[0].plot(X[0,1]/Au, Y[0,1]/Au, marker='o', label = 'Earth', color = "#2178b4", markeredgecolor='black')
-    axes[0].plot(X[0,0]/Au, Y[0,0]/Au, marker='o', label = 'Sun', color = "#ff7f0e", markeredgecolor='black')
-    axes[0].plot(X[0,2]/Au, Y[0,2]/Au, marker='o', label = 'Jupiter', color = "#37a33c", markeredgecolor='black')
-    axes[0].set_xlabel('x position (Au)')
-    axes[0].set_ylabel('y position (Au)')
-    axes[1].set_xlabel('Time (years)')
-    axes[1].set_ylabel('Relative distance From COM')
-    axes[0].legend(loc='upper center', bbox_to_anchor=(0.8, 1.1))
-    leg = axes[0].legend(loc='upper center', bbox_to_anchor=(0.8, 1.1))
+        plt.plot(x , R1,label = 'Earth') #f'dt = {p} mins')
+        plt.plot(x , R3,label = 'Sun' ) #f'dt = {p} mins')
+        plt.plot(x , R2,label = 'Jupiter') #f'dt = {p} mins')
+    #axes[0].plot(X[:,1]/Au, Y[:,1]/Au)
+    #axes[0].plot(X[:,0]/Au, Y[:,0]/Au)
+    #axes[0].plot(X[:,2]/Au, Y[:,2]/Au)
+    ax.xaxis.set_visible(False)
+    #axes[0].plot(X[0,1]/Au, Y[0,1]/Au, marker='o', label = 'Earth', color = "#2178b4", markeredgecolor='black')
+    #axes[0].plot(X[0,0]/Au, Y[0,0]/Au, marker='o', label = 'Sun', color = "#ff7f0e", markeredgecolor='black')
+    #axes[0].plot(X[0,2]/Au, Y[0,2]/Au, marker='o', label = 'Jupiter', color = "#37a33c", markeredgecolor='black')
+    #axes[0].set_xlabel('x position (Au)')
+    #axes[0].set_ylabel('y position (Au)')
+    ax.set_xlabel('Time (years)')
+    ax.set_ylabel('Relative distance From COM')
+    ax.legend(loc='upper center', bbox_to_anchor=(0.8, 1.1))
+    #leg = axes[0].legend(loc='upper center', bbox_to_anchor=(0.8, 1.1))
+    #frame = leg.get_frame()
+    #frame.set_facecolor("none")   # transparent background
+    #frame.set_edgecolor("black")  # visible border
+    #frame.set_linewidth(1.5)      # normal border thickness
+    #frame.set_alpha(0.2) 
+    #axes[0].axis('equal')
+    leg = plt.legend( bbox_to_anchor=(0.85, 0.8))
     frame = leg.get_frame()
-    frame.set_facecolor("none")   # transparent background
+    frame.set_facecolor("#eeeeee")   # transparent background
     frame.set_edgecolor("black")  # visible border
     frame.set_linewidth(1.5)      # normal border thickness
-    frame.set_alpha(0.2) 
-    axes[0].axis('equal')
-    leg = axes[1].legend( bbox_to_anchor=(0.7, 1.1))
-    frame = leg.get_frame()
-    frame.set_facecolor("none")   # transparent background
-    frame.set_edgecolor("black")  # visible border
-    frame.set_linewidth(1.5)      # normal border thickness
-    frame.set_alpha(0.2)
+    frame.set_alpha(1)
     plt.savefig(r'C:\Users\adidu\Documents\Work stuff\Year 3\Computing Project\Old Python Files\All 3 bodies LOOKING GOODDDD.png', transparent=True)
     avg = np.mean(R1)
     return avg
         
 def dtvaryadv():
-    #times = np.array([20, 30, 40, 50, 60])
-    times = np.arange(720,100_000,500)
+    #times = np.array([43200])
+    times = np.arange(720,72000,1000)
     Y = len(times)
-    fig, axes = plt.subplots(1, 2, figsize=(15, 5))
+    fig, axes = plt.subplots(1, 2, figsize=(12, 4))
     Avgs = np.zeros(Y)
     for ax in axes:
         ax.spines['top'].set_visible(False)
@@ -255,20 +257,18 @@ def dtvaryadv():
 
     for i in range(0,Y):
         dt = datetime.timedelta(minutes=int(times[i])).total_seconds()
-        T = 365 * 60 * 60 * 24 * 100
+        T = 365 * 60 * 60 * 24 * 48
         TotT = int(T / dt)
         Vx, Vy, X, Y, R1, R2, R3, Em, Jm, Sm, t = BigFunc(TotT, dt)
         x = np.linspace(0, T, len(R1))
         p = times/(60*24)
-        #axes[1].plot(x , R1,label = f'dt = {p} mins')
-        #axes[1].plot(x , R2,label = f'dt = {p} mins')
         Avgs[i] = Em
     axes[1].loglog(p, Avgs)
     
     Vx, Vy, X, Y, R1, R2, R3, Em, Jm, Sm, t = BigFunc(oTotT, odt)
-    axes[0].plot(X[:,0], Y[:,0], label = 'Sun')
-    axes[0].plot(X[:,1], Y[:,1], label = 'Earth')
-    axes[0].plot(X[:,2], Y[:,2], label = 'Jupiter')
+    #axes[0].plot(X[:,0], Y[:,0], label = 'Sun')
+    #axes[0].plot(X[:,1], Y[:,1], label = 'Earth')
+    #axes[0].plot(X[:,2], Y[:,2], label = 'Jupiter')
     #axes[0].scatter(*COMCalc(), color='red', marker='x', label='COM')
     axes[0].set_xlabel('x position (m)')
     axes[0].set_ylabel('y position (m)')
@@ -282,7 +282,7 @@ def dtvaryadv():
     axes[0].axis('equal')
     #axes[0].set_title(f'Earth-Sun Orbit')
     
-    axes[1].set_ylabel('Deviation of Earth Orbit Radius from initial position (m)')
+    axes[1].set_ylabel(r'$\frac{\Delta r}{r}$', rotation=0, fontsize=16, labelpad=-5)
     axes[1].set_xlabel('Timestep (Days)')
     #leg = axes[1].legend(loc='upper center', bbox_to_anchor=(0.7, 1.1))
     #frame = leg.get_frame()
@@ -295,10 +295,10 @@ def dtvaryadv():
     return Avgs
 
 def EnergyPlot():
-    fig, axes = plt.subplots(2, 1, figsize=(20, 5))
+    fig, axes = plt.subplots(2, 1, figsize=(9, 7))
     ms = array_all[:,1]
-    dt = datetime.timedelta(hours=int(24)).total_seconds()
-    T = 365 * 60 * 60 * 24 * 100
+    dt = datetime.timedelta(days=int(10)).total_seconds()
+    T = 365 * 60 * 60 * 24 * 36
     TotT = int(T / dt)
     Vx, Vy, X, Y, R1, R2, R3, Em, Jm, Sm, t = BigFunc(TotT, dt)
     halfposX = np.empty((len(X)-1, N))
@@ -330,59 +330,82 @@ def EnergyPlot():
     dk = np.empty(len(halfposX))
     dTot = np.empty(len(halfposX))
     for i in range (0, len(Utotarr)):
-        du[i] = Utotarr[i] - Uavg
-        dk[i] = KEtotarr[i] - Kavg
-        dTot[i] = Etot[i] / Tavg
+        #du[i] = Utotarr[i] - Uavg
+        #dk[i] = KEtotarr[i] - Kavg
+        #dTot[i] = Etot[i] - Tavg
+        du[i] = (1- (Utotarr[i]/ Utotarr[0]))*100
+        dk[i] = (1- (KEtotarr[i]/ KEtotarr[0]))*100
+        dTot[i] = (1- (Etot[i] / Etot[0]))*100
+        
+    hdu = np.max(du)
+    hdk = np.max(dk)
+    hdt = np.max(dTot)
+
+
         
     x = np.linspace(0, T, len(Utotarr))/(60*60*24*365)
     #axes[0] = fig.add_axes([0.1, 0.35, 0.85, 0.6])
-    fig = plt.figure(figsize=(15, 10))
-    gs = gridspec.GridSpec(2, 1, height_ratios=[4, 2])  # top 3x taller
+    #fig = plt.figure(figsize=(15, 10))
+    #gs = gridspec.GridSpec(2, 1, height_ratios=[4, 2])  # top 3x taller
 
-    axes[0] = fig.add_subplot(gs[0])
-    axes[1] = fig.add_subplot(gs[1])
-    axes[0].plot(x, Utotarr/1_000_000, label = 'Potential Energy')
-    axes[0].plot(x, KEtotarr/1_000_000, label = 'Kinetic Energy')
-    axes[0].plot(x, Etot/1_000_000, label = 'Total Energy')
+    #axes[0] = fig.add_subplot(gs[0])
+    #axes[1] = fig.add_subplot(gs[1])
+    #pos1 = axes[0].get_position()        # Bbox object
+    #pos2 = axes[1].get_position()
+
+    #axes[0].set_position([pos1.x0, pos1.y0, pos1.width*1, pos1.height*1.5])
+    #axes[1].set_position([pos2.x0, pos2.y0, pos2.width*1, pos2.height*1])
+    axes[0].plot(x, Utotarr, label = 'Potential Energy', color = 'tab:red')
+    axes[0].plot(x, KEtotarr, label = 'Kinetic Energy', color = 'tab:purple')
+    axes[0].plot(x, Etot, label = 'Total Energy', color = 'tab:gray')
     axes[0] .xaxis.set_visible(False)
-    axes[1].plot(x,du, label = 'Potential Energy')
-    axes[1].plot(x,dk, label = 'Kinetic Energy')
-    axes[1].plot(x,dTot, label = 'Total Energy')
-    axes[0].set_ylabel('Energy(MJ)')
-    axes[1].set_ylabel('Energy Deviation from mean')
+    axes[1].plot(x,du, label = r'$\Delta E_{pot}$', color = 'green')
+    axes[1].plot(x,dk, label = r'$\Delta E_{kin}$', color = 'orange')
+    axes[1].plot(x,dTot, label = r'$\Delta E_{tot}$', color = 'purple')
+    axes[0].set_ylabel('Energy(J)')
+    axes[1].set_ylabel('Energy Deviation from mean (J)')
+    #axes[1].set_ylabel('Percentage Change From initial energies (%)')
     axes[1].set_xlabel('Time (Years)')
     axes[0].ticklabel_format(useMathText=True)
     axes[1].ticklabel_format(useMathText=True)
-    
-    #axes[0].plot(X[:,0], Y[:,0], label = 'Sun')
-    #axes[0].plot(X[:,1], Y[:,1], label = 'Earth')
-    #axes[0].scatter(*COMCalc(), color='red', marker='x', label='COM')
-    #axes[0].set_xlabel('x position (m)')
-    #axes[0].set_ylabel('y position (m)')
-    #axes[0].legend(loc='upper center', bbox_to_anchor=(0.8, 1.1))
-    #leg = axes[0].legend(loc='upper center', bbox_to_anchor=(0.8, 1.1))
-    #frame = leg.get_frame()
-    #frame.set_facecolor("none")   # transparent background
-    #frame.set_edgecolor("black")  # visible border
-    #frame.set_linewidth(1.5)      # normal border thickness
-    #frame.set_alpha(0.2) 
-    #axes[0].axis('equal')
-    #    for j in range (0,N):
-    return Uavg, Kavg, Tavg
-            
-            
-    #return(halfposX,halfposY, TotT)
-U, K, E = EnergyPlot()
-print(U, K, E)
+    axes[0].legend(loc='upper center', bbox_to_anchor=(0.8, 1.1))
 
-    
+    leg = axes[1].legend(loc='upper center', bbox_to_anchor=(0.925, 1),
+    fontsize=12,      # text size
+    markerscale=1,  # scale marker size
+    handlelength=1.2, # length of legend lines
+    handleheight=1.2, # vertical scaling
+    borderpad=0.4)    # padding inside box
+
+    frame = leg.get_frame()
+    frame.set_facecolor("#eeeeee")   # transparent background
+    frame.set_edgecolor("black")  # visible border
+    frame.set_linewidth(1.5)      # normal border thickness
+    frame.set_alpha(1) 
+    plt.savefig(r'C:\Users\adidu\Documents\Work stuff\Year 3\Computing Project\Old Python Files\Energy Deviation from mean.png', transparent=True)
+    return Uavg, Kavg, Tavg, hdu, hdk, hdt
+
+            
+            
+
+#def figplotter():
+      #Function 1
+
+
+
+    #return(halfposX,halfposY, TotT)
+U, K, E, du, dk, de = EnergyPlot()
+print(U, K, E)
+print("Max Kinetic Energy diff:", dk)
+print("Max Potential Energy diff:", du)
+print("Max Total Energy diff:", de)
 #dtvary()
 #A = dtvaryadv()
 times = np.arange(720,100_000,500)
 arr = np.array([7])
-times = np.arange(720,100_000,500)
+times = np.arange(60,7200,1000)
 Y = len(times)
-print(Y)
+#print(A)
 
 
 
