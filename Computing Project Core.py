@@ -23,7 +23,7 @@ Particles = df['Particle Number (N)'].to_numpy()
 #print(array_all)
 
 
-odt = datetime.timedelta(hours=1).total_seconds()
+odt = datetime.timedelta(days=1).total_seconds()
 oT = 365 * 60 * 60 * 24 * 12
 oTotT = oT / odt
 #print(f'New one {TotT}' )
@@ -68,32 +68,60 @@ def ForceIter(arrx,arry,x):
             array_Fy[j,i] = -b
     return array_Fx, array_Fy    
 
+def force_vectorised(arra_x, arra_y,i):
+    """
+    x, y : (N,) arrays at a single timestep
+    m    : (N,) masses
+    """
+    arrx = arra_x[i,:]
+    arry = arra_y[i,:]
+    
+    dx = arrx[:, None] - arrx[None, :]
+    dy = arry[:, None] - arry[None, :]
+    m = array_all[:,1]
 
-#print(ForceIter())
-def AccelCalc(arrx,arry,x,t):
-    Fx,Fy = ForceIter(arrx,arry,x)
+    r2 = dx**2 + dy**2 + e**2
+    r3 = r2**1.5
 
-    SumFx = np.sum(Fx, axis=1)
-    SumFy = np.sum(Fy, axis=1)
-    dvx = np. zeros(N)
-    dvy = np. zeros(N)
-    for i in range(0,N):
-        mi = array_all[i,1]
-        dvx[i] = (SumFx[i] * t) / mi
-        dvy[i] = (SumFy[i] * t) / mi
+    Fx = -G * (m[:, None] * m[None, :]) * dx / r3
+    Fy = -G * (m[:, None] * m[None, :]) * dy / r3
+
+    # Remove self-interaction
+    np.fill_diagonal(Fx, 0.0)
+    np.fill_diagonal(Fy, 0.0)
+
+    # Net force on each particle
+    return Fx.sum(axis=1), Fy.sum(axis=1)
+
+#def AccelCalc(arrx,arry,x,t):
+def AccelCalc(arra_x,arra_y,i,t):
+    #Fx,Fy = ForceIter(arrx,arry,x)
+    Fx,Fy = force_vectorised(arra_x, arra_y,i)
+
+    #SumFx = np.sum(Fx, axis=1)
+    #SumFy = np.sum(Fy, axis=1)
+    m = array_all[:,1]
+    ax = Fx / m
+    ay = Fy / m
+    dvx = ax * t
+    dvy = ay * t
+    #for i in range(0,N):
+     #   mi = array_all[i,1]
+      #  dvx[i] = (SumFx[i] * t) / mi
+       # dvy[i] = (SumFy[i] * t) / mi
     return dvx, dvy
 
 
 def COMCalc(arrx,arry,t):
     ms = array_all[:,1]
-    Sums1 = np. zeros(N)
-    Sums2 = np. zeros(N)
-    for i in range (0,N):
-        Sums1[i] = ms[i] * arrx[t,i]
-    COMx = (np.sum(Sums1))/(np.sum(ms))
-    for i in range (0,N):
-        Sums2[i] = ms[i] * arry[t,i]   
-    COMy = (np.sum(Sums2))/(np.sum(ms))
+    #Sums1 = np. zeros(N)
+    #Sums2 = np. zeros(N)
+    #Sums1[i] = ms * arrx[t]
+    COMx = (np.sum(ms * arrx[t]))/(np.sum(ms))
+    #for i in range (0,N):
+    #    Sums2[i] = ms[i] * arry[t,i]   
+    COMy = (np.sum(ms * arry[t]))/(np.sum(ms))
+    
     return COMx, COMy
     
     
@@ -165,18 +193,17 @@ def BigFunc(T, t):
     A1,B1 = COMCalc(Xmatrix,Ymatrix, 0)
     for i in range (0,int(T-1)):
         A,B = COMCalc(Xmatrix,Ymatrix, i)
-        ax, ay = AccelCalc(Xmatrix, Ymatrix, i, t)
+        dvx, dvy = AccelCalc(Xmatrix, Ymatrix, i, t)
         #Eradius[i] = (xs[1] - A1) - np.sqrt((Xmatrix[i,1]- A)**2 + (Ymatrix[i,1]- B)**2)
         #Jradius[i] = (xs[2] - A1) - np.sqrt((Xmatrix[i,2]- A)**2 + (Ymatrix[i,2]- B)**2)
         #Sradius[i] = (xs[0] - A1) - np.sqrt((Xmatrix[i,0]- A)**2 + (Ymatrix[i,0]- B)**2)
         Eradius[i] = np.sqrt((Xmatrix[i,1]- A)**2 + (Ymatrix[i,1]- B)**2)
         Jradius[i] = np.sqrt((Xmatrix[i,2]- A)**2 + (Ymatrix[i,2]- B)**2)
         Sradius[i] = np.sqrt((Xmatrix[i,0]- A)**2 + (Ymatrix[i,0]- B)**2)
-        for j in range (0,N):
-            VXmatrix[i+1,j] = VXmatrix[i,j] + ax[j]  
-            VYmatrix[i+1,j] = VYmatrix[i,j] + ay[j]
-            Xmatrix[i+1,j] = Xmatrix[i,j] + (VXmatrix[i+1,j] * t)
-            Ymatrix[i+1,j] = Ymatrix[i,j] + (VYmatrix[i+1,j] * t)
+        VXmatrix[i+1] = VXmatrix[i] + dvx  
+        VYmatrix[i+1] = VYmatrix[i] + dvy
+        Xmatrix[i+1] = Xmatrix[i] + (VXmatrix[i+1] * t)
+        Ymatrix[i+1] = Ymatrix[i] + (VYmatrix[i+1] * t)
     Ermean = (np.mean(Eradius)-(xs[1]-A1))/(xs[1]-A1)
     Jrmean = (np.mean(Jradius)/(xs[2]-A1))-1
     Srmean = (-np.mean(Sradius)/(xs[0]-A1))-1
@@ -190,13 +217,16 @@ def BigFunc(T, t):
 
 #Vx, Vy, X, Y, R1, R2, R3, Em, Jm, Sm, t = BigFunc(oTotT, odt)
 #print(t)
+#plt.plot(X[:,1]/Au, Y[:,1]/Au)
+#plt.plot(X[:,0]/Au, Y[:,0]/Au)
+#plt.plot(X[:,2]/Au, Y[:,2]/Au)
 
 
 def dtvary():
     times = np.array([1])
     Y = len(times)
-    #fig, axes = plt.subplots(1, 2, figsize=(21, 7))
-    fig = plt.figure(figsize=(9, 4))
+    fig, axes = plt.subplots(1, 2, figsize=(21, 7))
+    #fig = plt.figure(figsize=(9, 4))
     #fig, axes = plt.subplots(2, 1, figsize=(20, 10))
     plt.subplots_adjust(hspace=0.4)
     #for ax in axes:
@@ -212,29 +242,29 @@ def dtvary():
         Vx, Vy, X, Y, R1, R2, R3, Em, Jm, Sm, t = BigFunc(int(TotT), dt)
         #Vx, Vy, X, Y, R1, R3, Em, Sm, t = BigFunc(int(TotT), dt)
         x = np.linspace(0, T, len(R1)) / (60*60*24*365)
-        p = times[i]
-        plt.plot(x , R1,label = 'Earth') #f'dt = {p} mins')
-        plt.plot(x , R3,label = 'Sun' ) #f'dt = {p} mins')
-        plt.plot(x , R2,label = 'Jupiter') #f'dt = {p} mins')
-    #axes[0].plot(X[:,1]/Au, Y[:,1]/Au)
-    #axes[0].plot(X[:,0]/Au, Y[:,0]/Au)
-    #axes[0].plot(X[:,2]/Au, Y[:,2]/Au)
+        #p = times[i]
+        axes[1].plot(x , R1,label = 'Earth') #f'dt = {p} mins')
+        axes[1].plot(x , R3,label = 'Sun' ) #f'dt = {p} mins')
+        axes[1].plot(x , R2,label = 'Jupiter') #f'dt = {p} mins')
+    axes[0].plot(X[:,1]/Au, Y[:,1]/Au)
+    axes[0].plot(X[:,0]/Au, Y[:,0]/Au)
+    axes[0].plot(X[:,2]/Au, Y[:,2]/Au)
     ax.xaxis.set_visible(False)
-    #axes[0].plot(X[0,1]/Au, Y[0,1]/Au, marker='o', label = 'Earth', color = "#2178b4", markeredgecolor='black')
-    #axes[0].plot(X[0,0]/Au, Y[0,0]/Au, marker='o', label = 'Sun', color = "#ff7f0e", markeredgecolor='black')
-    #axes[0].plot(X[0,2]/Au, Y[0,2]/Au, marker='o', label = 'Jupiter', color = "#37a33c", markeredgecolor='black')
-    #axes[0].set_xlabel('x position (Au)')
-    #axes[0].set_ylabel('y position (Au)')
+    axes[0].plot(X[0,1]/Au, Y[0,1]/Au, marker='o', label = 'Earth', color = "#2178b4", markeredgecolor='black')
+    axes[0].plot(X[0,0]/Au, Y[0,0]/Au, marker='o', label = 'Sun', color = "#ff7f0e", markeredgecolor='black')
+    axes[0].plot(X[0,2]/Au, Y[0,2]/Au, marker='o', label = 'Jupiter', color = "#37a33c", markeredgecolor='black')
+    axes[0].set_xlabel('x position (Au)')
+    axes[0].set_ylabel('y position (Au)')
     ax.set_xlabel('Time (years)')
     ax.set_ylabel('Relative distance From COM')
     ax.legend(loc='upper center', bbox_to_anchor=(0.8, 1.1))
-    #leg = axes[0].legend(loc='upper center', bbox_to_anchor=(0.8, 1.1))
-    #frame = leg.get_frame()
-    #frame.set_facecolor("none")   # transparent background
-    #frame.set_edgecolor("black")  # visible border
-    #frame.set_linewidth(1.5)      # normal border thickness
-    #frame.set_alpha(0.2) 
-    #axes[0].axis('equal')
+    leg = axes[0].legend(loc='upper center', bbox_to_anchor=(0.8, 1.1))
+    frame = leg.get_frame()
+    frame.set_facecolor("none")   # transparent background
+    frame.set_edgecolor("black")  # visible border
+    frame.set_linewidth(1.5)      # normal border thickness
+    frame.set_alpha(0.2) 
+    axes[0].axis('equal')
     leg = plt.legend( bbox_to_anchor=(0.85, 0.8))
     frame = leg.get_frame()
     frame.set_facecolor("#eeeeee")   # transparent background
@@ -266,10 +296,10 @@ def dtvaryadv():
     axes[1].loglog(p, Avgs)
     
     Vx, Vy, X, Y, R1, R2, R3, Em, Jm, Sm, t = BigFunc(oTotT, odt)
-    #axes[0].plot(X[:,0], Y[:,0], label = 'Sun')
-    #axes[0].plot(X[:,1], Y[:,1], label = 'Earth')
-    #axes[0].plot(X[:,2], Y[:,2], label = 'Jupiter')
-    #axes[0].scatter(*COMCalc(), color='red', marker='x', label='COM')
+    axes[0].plot(X[:,0], Y[:,0], label = 'Sun')
+    axes[0].plot(X[:,1], Y[:,1], label = 'Earth')
+    axes[0].plot(X[:,2], Y[:,2], label = 'Jupiter')
+    axes[0].scatter(*COMCalc(), color='red', marker='x', label='COM')
     axes[0].set_xlabel('x position (m)')
     axes[0].set_ylabel('y position (m)')
     axes[0].legend(loc='upper center', bbox_to_anchor=(0.8, 1.1))
@@ -386,20 +416,16 @@ def EnergyPlot():
     return Uavg, Kavg, Tavg, hdu, hdk, hdt
 
             
-            
-
-#def figplotter():
-      #Function 1
 
 
 
     #return(halfposX,halfposY, TotT)
-U, K, E, du, dk, de = EnergyPlot()
-print(U, K, E)
-print("Max Kinetic Energy diff:", dk)
-print("Max Potential Energy diff:", du)
-print("Max Total Energy diff:", de)
-#dtvary()
+#U, K, E, du, dk, de = EnergyPlot()
+#print(U, K, E)
+#print("Max Kinetic Energy diff:", dk)
+#print("Max Potential Energy diff:", du)
+#print("Max Total Energy diff:", de)
+dtvary()
 #A = dtvaryadv()
 times = np.arange(720,100_000,500)
 arr = np.array([7])
