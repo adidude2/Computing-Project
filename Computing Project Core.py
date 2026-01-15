@@ -124,9 +124,13 @@ def COMCalc(arrx,arry,t):
     
     return COMx, COMy
     
-    
-#a,b = COMCalc()
-#print(a, b)
+Xmatrix = np.empty((int(oTotT), N))
+Ymatrix = np.empty((int(oTotT), N))
+for i in range (0,N):
+    Xmatrix[0,i] = array_all[i,2]
+    Ymatrix[0,i] = array_all[i,3]  
+a,b = COMCalc(Xmatrix, Ymatrix,0)
+print(a, b)
     
 def firstvel(T):
     Xmatrix = np.empty((int(T), N))
@@ -150,6 +154,7 @@ def firstvel(T):
        #Fvel1[i] = (xs[i] - A) * 2 * np.pi/(365*60*60*24)
     return Fvel2 #ONLY WORKS IN THE SUN AND EARTH SYSTEM AND MAYBE JUPITER
     
+print(firstvel(oTotT))
 
 def InitVelCalc(T, t):
     Xmatrix = np.empty((int(T), N))
@@ -425,7 +430,7 @@ def EnergyPlot():
 #print("Max Kinetic Energy diff:", dk)
 #print("Max Potential Energy diff:", du)
 #print("Max Total Energy diff:", de)
-dtvary()
+#dtvary()
 #A = dtvaryadv()
 times = np.arange(720,100_000,500)
 arr = np.array([7])

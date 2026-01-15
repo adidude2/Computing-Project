@@ -59,10 +59,7 @@ def ForceCalc(m1,m2,x1,y1,x2,y2):
 
 
 
-def force_vectorised(arra_x, arra_y):
-    
-    arrx = arra_x
-    arry = arra_y
+def force_vectorised(arrx, arry):
     
     dx = arrx[:, None] - arrx[None, :]
     dy = arry[:, None] - arry[None, :]
@@ -88,8 +85,8 @@ Ymatrix = array_all[:,3]
 #print(force_vectorised(Xmatrix, Ymatrix, 0))
 
 
-def AccelCalc(arra_x,arra_y,i,t):
-    Fx,Fy = force_vectorised(arra_x, arra_y,i)
+def AccelCalc(arrx,arry,i,t):
+    Fx,Fy = force_vectorised(arrx, arry,i)
     m = array_all[:,1]
     ax = Fx / m
     ay = Fy / m
@@ -105,13 +102,13 @@ def COMCalc(arrx,arry):
     return COMx, COMy
     
     
-#a,b = COMCalc()
-#print(a, b)
+#x,y = COMCalc(Xmatrix, Ymatrix)
+#print(x, y)
     
-def firstvel(T):
+def firstvel(arrx,arry):
     Xmatrix = array_all[:,2]
     Ymatrix = array_all[:,3]
-    SumFx, SumFy = force_vectorised(Xmatrix,Ymatrix)
+    SumFx, SumFy = force_vectorised(arrx,arry)
     
     ms = array_all[:,1]
     xs = array_all[:,2]
@@ -125,20 +122,15 @@ def firstvel(T):
        #Fvel1[i] = (xs[i] - A) * 2 * np.pi/(365*60*60*24)
     return Fvel2 #ONLY WORKS IN THE SUN AND EARTH SYSTEM AND MAYBE JUPITER
     
-print(firstvel(oTotT))
+#print(firstvel(Xmatrix, Ymatrix))
 
 def InitVelCalc(T, t):
-    Xmatrix = np.empty((int(T), N))
-    Ymatrix = np.empty((int(T), N))
-    for i in range (0,N):
-        Xmatrix[0,i] = array_all[i,2]
-        Ymatrix[0,i] = array_all[i,3]
     a = firstvel(T)
     initvx = np. zeros(N)
     initvy = np. zeros(N)
     xs = array_all[:,2]
     ys = array_all[:,3]
-    A,B = COMCalc(Xmatrix,Ymatrix,0)
+    A,B = COMCalc(xs,ys)
     delthetas = np. zeros(N)
     # This function is made assuming all objects start on the same plane
     for i in range (0,N):
