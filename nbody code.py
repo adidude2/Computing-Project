@@ -47,17 +47,16 @@ e = 0.1
 #print(x)
 #print("GPU:", cp.cuda.runtime.getDeviceProperties(0)['computeCapability'])
 
+def Posallocate(N, R):
+    Points = np.empty((int(N),3))
+    Points = np.random.randint(0, R, size=(int(N),3))
+    rng = np.random.default_rng()
+    N = 100
 
+    x = rng.uniform(0, 1, size=N)
+    return Points
 
-def ForceCalc(m1,m2,x1,y1,x2,y2):
-    dx = x2 - x1
-    dy = y2 - y1
-    r3 = (dx**2 + dy**2 + e**2)**(1.5)
-    Fx = G * m1 * m2 * dx / r3
-    Fy = G * m1 * m2 * dy / r3
-    return Fx, Fy
-
-
+print(Posallocate(100, 1000))
 
 def force_vectorised(arrx, arry):
     
@@ -105,6 +104,10 @@ def COMCalc(arrx,arry):
     
 #x,y = COMCalc(Xmatrix, Ymatrix)
 #print(x, y)
+
+
+#def RandomVels(N):
+    
     
 def firstvel(arrx,arry):
     Xmatrix = array_all[:,2]
