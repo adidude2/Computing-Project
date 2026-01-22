@@ -501,3 +501,6 @@ runcell(0, 'C:/Users/adidu/.spyder-py3/Computing Project Core.py')
 
 ## ---(Thu Jan 22 15:26:22 2026)---
 %runcell -i 0 'C:/Users/adidu/.spyder-py3/nbody code real.py'
+
+## ---(Thu Jan 22 16:49:54 2026)---
+%runcell -i 0 'C:/Users/adidu/.spyder-py3/nbody code real.py'

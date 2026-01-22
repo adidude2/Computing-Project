@@ -163,15 +163,15 @@ def RandomVels(a, Vmax):
     Zmatrix = a[:,2]
     L =len(Xmatrix)
     V = np.random.randint(-Vmax, Vmax, size=(L,3)).astype(float)
-    #a = np.array([1,0,0])
-    #V = np.array([1,1,0])
+    a = np.array([[1,0,0],[0,1,0]])
+    V = np.array([[1,1,0],[0,1,1]])
     #vel = Velocities[0] - (np.dot(Velocities[0], a[0])/np.dot(a[0], a[0])) * a[0] 
-    vel = V - (np.sum(V * a, axis = 0)/np.sum(a * a, axis = 0)) * a
-    return vel, a
+    vel = V - (np.sum(V * a, axis = 1)/np.sum(a * a, axis = 1)) * a
+    return vel
 
 a,b,mass = Posallocate(1000, 1000)    
-vel, mat =RandomVels(a, 100)
-#print(len(vel),len(mat))
+vel =RandomVels(a, 5)
+print(vel)
 
 def HugeFunc(T, t, N, R):
     a,b,mass = Posallocate(N, R)
@@ -187,9 +187,13 @@ def HugeFunc(T, t, N, R):
     # Zmatrix = np.concatenate((Zmatrix, Zmatrix))  
     # mass =  np.concatenate((mass,mass))
     
-    VXmatrix = np.zeros(len(Xmatrix))
-    VYmatrix = np.zeros(len(Xmatrix))
-    VZmatrix = np.zeros(len(Xmatrix))
+    vel = RandomVels(a, 2)
+    #VXmatrix = np.zeros(len(Xmatrix))
+    #VYmatrix = np.zeros(len(Xmatrix))
+    #VZmatrix = np.zeros(len(Xmatrix))
+    VXmatrix = vel[:,0]
+    VYmatrix = vel[:,1]
+    VZmatrix = vel[:,2]
     Radius = np.zeros(len(Xmatrix))
     SavedX = []
     SavedY = []
