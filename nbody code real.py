@@ -53,10 +53,12 @@ a,b,mass = Posallocate(1000, 1000)
 Xmatrix = a[:,0]
 Ymatrix = a[:,1]
 Zmatrix = a[:,2]
+#print(type(len(Xmatrix)))
+#print(len(Ymatrix))
+#print(len(Zmatrix))
 
 
-
-
+"""
 # Xmatrixn = Xmatrix - 3000
 # Xmatrix = np.concatenate((Xmatrixn, Xmatrix))
 # Ymatrix = np.concatenate((Ymatrix, Ymatrix))
@@ -77,7 +79,6 @@ Zmatrix = a[:,2]
 # ax.set_zticks([-L, 0, L])
 # ax.view_init(elev=15, azim=45)
 # ax.scatter(a,b,c, s=5)
-# #plt.savefig(r'C:\Users\adidu\Documents\Work stuff\Year 3\Computing Project\Old Python Files\Initial Positions.png', transparent=True)
 # scat = ax.scatter(a, b, c, s=5, color = 'tab:blue')
 
 # def update(frame):
@@ -94,13 +95,13 @@ Zmatrix = a[:,2]
 
 # # Save video
 # ani.save(
-#     r"C:\Users\adidu\Documents\Work stuff\Year 3\Computing Project\Old Python Files\Initial_Positions_Rotation.mp4",
+#     r"C:/Users\adidu\Documents\Work stuff\Year 3\Computing Project\Old Python Files\Initial_Positions_Rotation.mp4",
 #     fps=60
 # )
 
 # plt.show()
 
-
+"""
 
 
 
@@ -156,9 +157,21 @@ def COMCalc(arrx,arry, arrz, mass):
 #print(x, y)
 
 
-#def RandomVels(N):
-    
+def RandomVels(a, Vmax):
+    Xmatrix = a[:,0]
+    Ymatrix = a[:,1]
+    Zmatrix = a[:,2]
+    L =len(Xmatrix)
+    V = np.random.randint(-Vmax, Vmax, size=(L,3)).astype(float)
+    #a = np.array([1,0,0])
+    #V = np.array([1,1,0])
+    #vel = Velocities[0] - (np.dot(Velocities[0], a[0])/np.dot(a[0], a[0])) * a[0] 
+    vel = V - (np.sum(V * a, axis = 0)/np.sum(a * a, axis = 0)) * a
+    return vel, a
 
+a,b,mass = Posallocate(1000, 1000)    
+vel, mat =RandomVels(a, 100)
+#print(len(vel),len(mat))
 
 def HugeFunc(T, t, N, R):
     a,b,mass = Posallocate(N, R)
@@ -167,12 +180,12 @@ def HugeFunc(T, t, N, R):
     Zmatrix = a[:,2]
     
     
-    Xmatrixl = Xmatrix - 10000
-    Xmatrixr = Xmatrix + 1000
-    Xmatrix = np.concatenate((Xmatrixl, Xmatrixr))
-    Ymatrix = np.concatenate((Ymatrix, Ymatrix))
-    Zmatrix = np.concatenate((Zmatrix, Zmatrix))  
-    mass =  np.concatenate((mass,mass))
+    # Xmatrixl = Xmatrix - 10000
+    # Xmatrixr = Xmatrix + 1000
+    # Xmatrix = np.concatenate((Xmatrixl, Xmatrixr))
+    # Ymatrix = np.concatenate((Ymatrix, Ymatrix))
+    # Zmatrix = np.concatenate((Zmatrix, Zmatrix))  
+    # mass =  np.concatenate((mass,mass))
     
     VXmatrix = np.zeros(len(Xmatrix))
     VYmatrix = np.zeros(len(Xmatrix))
@@ -259,7 +272,7 @@ def HugeFunc(T, t, N, R):
     return SavedX, SavedY, SavedZ, SavedSteps, ani #test
     #return VXmatrix, VYmatrix, Xmatrix, Ymatrix, Eradius, Sradius, Ermean, Srmean, test
 R = 4000    
-SavedX, SavedY, SavedZ, SavedSteps, ani = HugeFunc(oTotT, odt, 700, R)
+#SavedX, SavedY, SavedZ, SavedSteps, ani = HugeFunc(oTotT, odt, 700, R)
 
 
     

@@ -495,3 +495,9 @@ runcell(0, 'C:/Users/adidu/.spyder-py3/Computing Project Core.py')
 %runfile 'C:/Users/adidu/.spyder-py3/GPU nbody code1.py' --wdir
 %runcell -i 0 'C:/Users/adidu/.spyder-py3/Computing Project Core.py'
 %runcell -i 0 'C:/Users/adidu/.spyder-py3/nbody code.py'
+
+## ---(Thu Jan 22 12:24:35 2026)---
+%runcell -i 0 'C:/Users/adidu/.spyder-py3/nbody code real.py'
+
+## ---(Thu Jan 22 15:26:22 2026)---
+%runcell -i 0 'C:/Users/adidu/.spyder-py3/nbody code real.py'
