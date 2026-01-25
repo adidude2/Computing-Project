@@ -7,9 +7,9 @@ Created on Wed Jan 21 18:25:52 2026
 
 import numpy as np
 
-data = np.array([10, 20, 30, 40, 50])
-
-for t in range(0, len(data), 2):
-    value = data[t]
-    print(value)
+a = np.array([[1,0,0],[0,1,0]])
+b = np.array([[1,1,0],[0,1,1]])
+c = a * b
+print(c)
+print(np.sum(a * b, axis = 1))
     
