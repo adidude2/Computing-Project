@@ -19,7 +19,7 @@ import matplotlib.gridspec as gridspec
 
 
 odt = datetime.timedelta(days=1).total_seconds()
-oT = 365 * 60 * 60 * 24 * 20
+oT = 365 * 60 * 60 * 24 * 10
 oTotT = oT / odt
 #print(f'New one {TotT}' )
 
@@ -259,7 +259,7 @@ def HugeFunc(T, t, N, R):
         Y = SavedY[frame] - B
         Z = SavedZ[frame] - C
         
-        L = 1 * R
+        L = 3 * R
         ax.set_xlim(-L, L)
         ax.set_ylim(-L, L)
         ax.set_zlim(-L, L)
@@ -278,7 +278,7 @@ def HugeFunc(T, t, N, R):
             Z,
             s=5
         )
-        ax.view_init(elev=15, azim=90)#+frame)  # elev is fixed, azim changes each frame
+        ax.view_init(elev=15, azim=90+frame)  # elev is fixed, azim changes each frame
         
         ax.set_title(f"Time (days) = {SavedSteps[frame]*(t/(3600*24))}")
     
