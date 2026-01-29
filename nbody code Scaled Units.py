@@ -32,78 +32,97 @@ OR = 1000
 G=6.6726e-11 #N-m2/kg2
 e = 0.1*OR
 
+
+
+# Nbodyunits:
+# G_code = 1
+# M_tot code = 1
+
+# Scaling to physical units (for interpretation only):
+# 1 length unit = 3 pc
+# 1 mass unit   = 1e5 Msun
+# 1 time unit   = 0.24 Myr
+# 1 velocity    = 12.5 km/s
+
+G = 1
+
+
 #cp.show_config()
 #x = cp.arange(10)
 #print(x)
 #print("GPU:", cp.cuda.runtime.getDeviceProperties(0)['computeCapability'])
 
 def Posallocate(N, R):
-    Points = np.random.randint(-R, R, size=(int(N),3)).astype(float)
-    mods = np.linalg.norm(Points, axis=1)
+    #Random Direction for vectors normalized
+    r = np.random.normal(size=(int(N),3))
+    rhat = r / np.linalg.norm(r, axis=1)[:, None]
 
-    rmin = 100   # or something physically sensible
-    mask = (mods <= R) & (mods >= rmin)
-    #mask = mods <= R
-    Points = Points[mask]
-    mods   = mods[mask]
-    masses =  np.full(len(mods),1000)
-    return Points, mods, masses
+    #Random Radius with uniform volume density
+    u = np.random.rand(N)
+    r = R * u**(1/3)
 
-a,b,mass = Posallocate(1000, 1000)
+    #Combine Radius and Direction
+    Points = rhat * r[:, None] 
+    
+    masses =  np.full(N,1.0/N)
+    return Points, masses
+
+a,mass = Posallocate(1000, 1)
 #print(len(a),len(b))
 #print(len(a[:,0]),len(a[:,1]),len(a[:,2]))
 Xmatrix = a[:,0]
 Ymatrix = a[:,1]
 Zmatrix = a[:,2]
-#print(type(len(Xmatrix)))
+print(Xmatrix)
 #print(len(Ymatrix))
 #print(len(Zmatrix))
 
 
-"""
-# Xmatrixn = Xmatrix - 3000
-# Xmatrix = np.concatenate((Xmatrixn, Xmatrix))
-# Ymatrix = np.concatenate((Ymatrix, Ymatrix))
-# Zmatrix = np.concatenate((Zmatrix, Zmatrix))
+
+
+#Xmatrixn = Xmatrix - 3000
+#Xmatrix = np.concatenate((Xmatrixn, Xmatrix))
+#Ymatrix = np.concatenate((Ymatrix, Ymatrix))
+#Zmatrix = np.concatenate((Zmatrix, Zmatrix))
 
 
 
 
-# fig = plt.figure(figsize=(10, 10))
-# ax = fig.add_subplot(projection='3d')
-# ax.set_box_aspect([1, 1, 1])
-# L = 4 * 1000
-# ax.set_xlim(-L, L)
-# ax.set_ylim(-L, L)
-# ax.set_zlim(-L, L)
-# ax.set_xticks([-L, 0, L])
-# ax.set_yticks([-L, 0, L])
-# ax.set_zticks([-L, 0, L])
-# ax.view_init(elev=15, azim=45)
-# ax.scatter(a,b,c, s=5)
-# scat = ax.scatter(a, b, c, s=5, color = 'tab:blue')
+fig = plt.figure(figsize=(10, 10))
+ax = fig.add_subplot(projection='3d')
+ax.set_box_aspect([1, 1, 1])
+L = 2 * 1
+ax.set_xlim(-L, L)
+ax.set_ylim(-L, L)
+ax.set_zlim(-L, L)
+ax.set_xticks([-L, 0, L])
+ax.set_yticks([-L, 0, L])
+ax.set_zticks([-L, 0, L])
+ax.view_init(elev=15, azim=45)
+ax.scatter(Xmatrix,Ymatrix,Zmatrix, s=5)
+scat = ax.scatter(Xmatrix,Ymatrix,Zmatrix, s=5, color = 'tab:blue')
 
-# def update(frame):
-#     ax.view_init(elev=15, azim=frame)
-#     return scat,
+def update(frame):
+    ax.view_init(elev=15, azim=frame)
+    return scat,
 
-# # Animation
-# ani = FuncAnimation(
-#     fig,
-#     update,
-#     frames=360,     # full rotation
-#     interval=20     # ~60 fps on screen
-# )
+# Animation
+ani = FuncAnimation(
+    fig,
+    update,
+    frames=360,     # full rotation
+    interval=20     # ~60 fps on screen
+)
 
-# # Save video
-# ani.save(
-#     r"C:/Users\adidu\Documents\Work stuff\Year 3\Computing Project\Old Python Files\Initial_Positions_Rotation.mp4",
-#     fps=60
-# )
+#Save video
+ani.save(
+    r"C:/Users\adidu\Documents\Work stuff\Year 3\Computing Project\Old Python Files\Initial_Positions_Rotation.mp4",
+    fps=60
+)
 
-# plt.show()
+plt.show()
 
-"""
+#"""
 
 
 
@@ -184,9 +203,9 @@ def RandomVels(a, Vmax):
       speeds.max())
     return vels
 
-a,b,mass = Posallocate(1000, 1000)    
-vel =RandomVels(a, 5)
-print(vel)
+#a,b,mass = Posallocate(1000, 1000)    
+#vel =RandomVels(a, 5)
+#print(vel)
 
 def HugeFunc(T, t, N, R):
     a,b,mass = Posallocate(N, R)
@@ -291,7 +310,7 @@ def HugeFunc(T, t, N, R):
     return SavedX, SavedY, SavedZ, SavedSteps, ani #test
     #return VXmatrix, VYmatrix, Xmatrix, Ymatrix, Eradius, Sradius, Ermean, Srmean, test
 R = 1000    
-SavedX, SavedY, SavedZ, SavedSteps, ani = HugeFunc(oTotT, odt, 1000, R)
+#SavedX, SavedY, SavedZ, SavedSteps, ani = HugeFunc(oTotT, odt, 1000, R)
 
 
     
