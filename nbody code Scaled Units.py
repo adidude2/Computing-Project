@@ -27,7 +27,7 @@ oTotT = oT / odt
 
 
 #ATTENTION ARRAYS GO ([ROW,COLUMN])
-OR = 1000
+OR = 1
 "Define universal constants:"
 G=6.6726e-11 #N-m2/kg2
 e = 0.1*OR
@@ -79,12 +79,11 @@ print(Xmatrix)
 
 
 
-
+"""
 #Xmatrixn = Xmatrix - 3000
 #Xmatrix = np.concatenate((Xmatrixn, Xmatrix))
 #Ymatrix = np.concatenate((Ymatrix, Ymatrix))
 #Zmatrix = np.concatenate((Zmatrix, Zmatrix))
-
 
 
 
@@ -122,11 +121,11 @@ ani.save(
 
 plt.show()
 
-#"""
+"""
 
 
 
-def force_vectorised(arrx, arry, arrz, mass):
+def force_vectorised(arrx, arry, arrz, mass, e):
     
     dx = arrx[:, None] - arrx[None, :]
     dy = arry[:, None] - arry[None, :]
@@ -153,8 +152,8 @@ def force_vectorised(arrx, arry, arrz, mass):
 #print(force_vectorised(a[:,0],a[:,1],a[:,2], mass))
 
 
-def AccelCalc(arrx,arry, arrz, mass, t):
-    Fx, Fy, Fz = force_vectorised(arrx, arry, arrz, mass)
+def AccelCalc(arrx,arry, arrz, mass, t, e):
+    Fx, Fy, Fz = force_vectorised(arrx, arry, arrz, mass, e)
     m = mass
     ax = Fx / m
     ay = Fy / m
@@ -221,7 +220,7 @@ def HugeFunc(T, t, N, R):
     # Zmatrix = np.concatenate((Zmatrix, Zmatrix))  
     # mass =  np.concatenate((mass,mass))
     
-    vel = RandomVels(a, 1e-4)
+    vel = RandomVels(a,Vmax = 1.0)# 1e-4)
     #VXmatrix = np.zeros(len(Xmatrix))
     #VYmatrix = np.zeros(len(Xmatrix))
     #VZmatrix = np.zeros(len(Xmatrix))
@@ -243,7 +242,7 @@ def HugeFunc(T, t, N, R):
             SavedZ.append(Zmatrix.copy())
             SavedSteps.append(i)
             
-        dvx, dvy, dvz = AccelCalc(Xmatrix, Ymatrix, Zmatrix, mass, t)
+        dvx, dvy, dvz = AccelCalc(Xmatrix, Ymatrix, Zmatrix, mass, t, e = )
         Radius = np.sqrt((Xmatrix - A)**2 + (Ymatrix - B)**2 + (Zmatrix - C)**2)
         VXmatrix += dvx
         VYmatrix += dvy

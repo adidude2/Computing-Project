@@ -513,3 +513,8 @@ runcell(0, 'C:/Users/adidu/.spyder-py3/Computing Project Core.py')
 %runcell -i 0 'C:/Users/adidu/.spyder-py3/nbody code Scaled Units.py'
 %runfile 'C:/Users/adidu/.spyder-py3/nbody code Scaled Units.py' --wdir
 %runcell -i 0 'C:/Users/adidu/.spyder-py3/nbody code Scaled Units.py'
+
+## ---(Fri Jan 30 16:05:07 2026)---
+%runcell -i 0 'C:/Users/adidu/.spyder-py3/nbody code Scaled Units.py'
+%runfile 'C:/Users/adidu/.spyder-py3/nbody code real vels.py' --wdir
+%runcell -i 0 'C:/Users/adidu/.spyder-py3/nbody code real vels.py'

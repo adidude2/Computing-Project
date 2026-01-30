@@ -32,10 +32,6 @@ OR = 1000
 G=6.6726e-11 #N-m2/kg2
 e = 0.1*OR
 
-#cp.show_config()
-#x = cp.arange(10)
-#print(x)
-#print("GPU:", cp.cuda.runtime.getDeviceProperties(0)['computeCapability'])
 
 def Posallocate(N, R):
     Points = np.random.randint(-R, R, size=(int(N),3)).astype(float)
@@ -202,13 +198,13 @@ def HugeFunc(T, t, N, R):
     # Zmatrix = np.concatenate((Zmatrix, Zmatrix))  
     # mass =  np.concatenate((mass,mass))
     
-    vel = RandomVels(a, 1e-4)
-    #VXmatrix = np.zeros(len(Xmatrix))
-    #VYmatrix = np.zeros(len(Xmatrix))
-    #VZmatrix = np.zeros(len(Xmatrix))
-    VXmatrix = vel[:,0]
-    VYmatrix = vel[:,1]
-    VZmatrix = vel[:,2]
+    #vel = RandomVels(a, 1e-4)
+    VXmatrix = np.zeros(len(Xmatrix))
+    VYmatrix = np.zeros(len(Xmatrix))
+    VZmatrix = np.zeros(len(Xmatrix))
+    #VXmatrix = vel[:,0]
+    #VYmatrix = vel[:,1]
+    #VZmatrix = vel[:,2]
     Radius = np.zeros(len(Xmatrix))
     SavedX = []
     SavedY = []
