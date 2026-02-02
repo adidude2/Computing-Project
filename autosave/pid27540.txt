@@ -1,1 +1,0 @@
-{'C:\\Users\\adidu\\.spyder-py3\\nbody code real vels.py': 'C:\\Users\\adidu\\.spyder-py3\\autosave\\nbody code real vels.py'}

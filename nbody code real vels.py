@@ -294,7 +294,7 @@ def HugeFunc(T, t, N, R):
     return SavedX, SavedY, SavedZ, SavedSteps, ani, SavedVX, SavedVY, SavedVZ #test
     #return VXmatrix, VYmatrix, Xmatrix, Ymatrix, Eradius, Sradius, Ermean, Srmean, test
 R = 1000    
-SavedX, SavedY, SavedZ, SavedSteps, ani, SavedVX, SavedVY, SavedVZ = HugeFunc(oTotT, odt, 1000, R)
+#SavedX, SavedY, SavedZ, SavedSteps, ani, SavedVX, SavedVY, SavedVZ = HugeFunc(oTotT, odt, 1000, R)
 
 
 
@@ -319,9 +319,9 @@ def EnergyPlot(N):
     for i in range (0,int(T-1)):
         Utot = 0
         for j in range (0,N):
-            halfposX[j] = (X[i,j] + X[i+1,j]) / 2
-            halfposY[j] = (Y[i,j] + Y[i+1,j]) / 2
-            halfposZ[j] = (Z[i,j] + Z[i+1,j]) / 2
+            halfposX[j] = (X[i][j] + X[i+1][j]) / 2
+            halfposY[j] = (Y[i][j] + Y[i+1][j]) / 2
+            halfposZ[j] = (Z[i][j] + Z[i+1][j]) / 2
         for l in range (0,N):
             for k in range(l+1,N):
                 u = -G * (ms[l]*ms[k])/np.sqrt((halfposX[l] - halfposX[k])**2 + (halfposY[l] - halfposY[k])**2 + (halfposZ[l] - halfposZ[k])**2)
@@ -329,7 +329,7 @@ def EnergyPlot(N):
         Utotarr[i] = Utot
         Ktot = 0
         for j in range (0,N):
-            k = 1/2 * ms[j] * (Vx[i+1,j]**2 + Vy[i+1,j]**2 + Vz[i+1,j]**2)
+            k = 1/2 * ms[j] * (Vx[i+1][j]**2 + Vy[i+1][j]**2 + Vz[i+1][j]**2)
             Ktot = Ktot + k
         KEtotarr[i] = Ktot
     Etot = Utotarr + KEtotarr
@@ -340,10 +340,10 @@ def EnergyPlot(N):
     plt.plot(x, Utotarr, label = 'Potential Energy', color = 'tab:red')
     plt.plot(x, KEtotarr, label = 'Kinetic Energy', color = 'tab:purple')
     plt.plot(x, Etot, label = 'Total Energy', color = 'tab:gray')
+    plt.savefig(r'C:\Users\adidu\Documents\Work stuff\Year 3\Computing Project\Old Python Files\Energy Deviation from meanNbody.png', transparent=True)
     return Utotarr, KEtotarr, Etot
 
-    
-    
+EnergyPlot(1000)
     
     
     
