@@ -10,7 +10,7 @@ high_dpi_custom_scale_factors = 1.5
 vertical_tabs = False
 prompt_on_exit = False
 panes_locked = True
-window/is_maximized = False
+window/is_maximized = True
 window/is_fullscreen = False
 use_custom_margin = True
 custom_margin = 0
@@ -364,7 +364,7 @@ console/use_cwd = True
 console/use_fixed_directory = False
 startup/use_project_or_home_directory = True
 startup/use_fixed_directory = False
-history = ['C:\\Users\\adidu', 'C:\\Users\\adidu\\.spyder-py3', 'C:\\Users\\adidu\\Documents\\waveforms\\Logging\\Wind Speed Logs', 'C:\\Users\\adidu\\Documents\\Waveforms\\Logging\\New Fan Data', 'C:\\', 'C:\\Users', 'C:\\Users\\adidu\\Downloads']
+history = ['C:\\Users\\adidu\\.spyder-py3', 'C:\\Users\\adidu', 'C:\\Users\\adidu\\Documents\\waveforms\\Logging\\Wind Speed Logs', 'C:\\Users\\adidu\\Documents\\Waveforms\\Logging\\New Fan Data', 'C:\\', 'C:\\Users', 'C:\\Users\\adidu\\Downloads']
 init_workdir = None
 workdir = None
 
