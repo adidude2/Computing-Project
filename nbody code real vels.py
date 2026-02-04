@@ -33,24 +33,40 @@ G=6.6726e-11 #N-m2/kg2
 e = 0.1*OR
 
 
+# def Posallocate(N, R):
+#     Points = np.random.randint(-R, R, size=(int(N),3)).astype(float)
+#     mods = np.linalg.norm(Points, axis=1)
+
+#     rmin = 100   # or something physically sensible
+#     mask = (mods <= R) & (mods >= rmin)
+#     #mask = mods <= R
+#     Points = Points[mask]
+#     mods   = mods[mask]
+#     masses =  np.full(len(mods),1000)
+#     return Points, mods, masses
+
 def Posallocate(N, R):
-    Points = np.random.randint(-R, R, size=(int(N),3)).astype(float)
-    mods = np.linalg.norm(Points, axis=1)
+    #Random Direction for vectors normalized
+    r = np.random.normal(size=(int(N),3))
+    rhat = r / np.linalg.norm(r, axis=1)[:, None]
 
-    rmin = 100   # or something physically sensible
-    mask = (mods <= R) & (mods >= rmin)
-    #mask = mods <= R
-    Points = Points[mask]
-    mods   = mods[mask]
-    masses =  np.full(len(mods),1000)
-    return Points, mods, masses
+    #Random Radius with uniform volume density
+    u = np.random.rand(N)
+    r = R * u**(1/3)
 
-a,b,mass = Posallocate(1000, 1000)
+    #Combine Radius and Direction
+    Points = rhat * r[:, None] 
+    
+    masses =  np.full(N, 1000000)# 1e25/N)
+    return Points, masses
+
+
+#a,mass = Posallocate(1000, 1000)
 #print(len(a),len(b))
 #print(len(a[:,0]),len(a[:,1]),len(a[:,2]))
-Xmatrix = a[:,0]
-Ymatrix = a[:,1]
-Zmatrix = a[:,2]
+#Xmatrix = a[:,0]
+#Ymatrix = a[:,1]
+#Zmatrix = a[:,2]
 #print(type(len(Xmatrix)))
 #print(len(Ymatrix))
 #print(len(Zmatrix))
@@ -180,12 +196,13 @@ def RandomVels(a, Vmax):
       speeds.max())
     return vels
 
-a,b,mass = Posallocate(1000, 1000)    
-vel =RandomVels(a, 5)
-print(vel)
+#a,b,mass = Posallocate(1000, 1000)    
+#vel =RandomVels(a, 5)
+#print(vel)
 
-def HugeFunc(T, t, N, R):
-    a,b,mass = Posallocate(N, R)
+
+def HugeFunc(T, t, ass, mass):
+    a = ass
     Xmatrix = a[:,0]
     Ymatrix = a[:,1]
     Zmatrix = a[:,2]
@@ -237,6 +254,12 @@ def HugeFunc(T, t, N, R):
         Xmatrix += VXmatrix * t
         Ymatrix += VYmatrix * t
         Zmatrix += VZmatrix * t
+        
+    return SavedCOM, SavedX, SavedY, SavedZ, SavedVX, SavedVY, SavedVZ, mass, SavedSteps 
+
+def plotfig(T, t, R, a, b):
+    
+    SavedCOM, SavedX, SavedY, SavedZ, SavedVX, SavedVY, SavedVZ, mass, SavedSteps = HugeFunc(T, t, a, b)
     fig = plt.figure(figsize=(10, 10))
     ax = fig.add_subplot(projection='3d')
     ax.set_box_aspect([1, 1, 1])
@@ -290,45 +313,41 @@ def HugeFunc(T, t, N, R):
 
     plt.show()
     
-
-    return SavedX, SavedY, SavedZ, SavedSteps, ani, SavedVX, SavedVY, SavedVZ #test
-    #return VXmatrix, VYmatrix, Xmatrix, Ymatrix, Eradius, Sradius, Ermean, Srmean, test
-R = 1000    
-#SavedX, SavedY, SavedZ, SavedSteps, ani, SavedVX, SavedVY, SavedVZ = HugeFunc(oTotT, odt, 1000, R)
+    return ani, SavedX 
 
 
-
-def EnergyPlot(N):
-    a,b,mass = Posallocate(N, R)
-    fig, axes = plt.subplots(2, 1, figsize=(9, 7))
-    ms = mass
-    dt = datetime.timedelta(days=int(10)).total_seconds()
-    T = 365 * 60 * 60 * 24 * 36
+def EnergyPlot(a, b):
+    #fig, axes = plt.subplots(2, 1, figsize=(9, 7))
+    fig = plt.figure(figsize=(10, 10))
+    dt = datetime.timedelta(days=int(1)).total_seconds()
+    T = 365 * 60 * 60 * 24 * 20
     TotT = int(T / dt)
     #Vx, Vy, X, Y, R1, R2, R3, Em, Jm, Sm, t = BigFunc(TotT, dt)
-    SavedX, SavedY, SavedZ, SavedSteps, ani, Vx, Vy, Vz = HugeFunc(TotT, dt, N, R)
+    SavedCOM, SavedX, SavedY, SavedZ, Vx, Vy, Vz, mass, SavedSteps = HugeFunc(TotT, dt, a, b)
+    ms = mass
     X = SavedX
     Y = SavedY
     Z = SavedZ
-    halfposX = np.empty(N)
-    halfposY = np.empty(N)
-    halfposZ = np.empty(N)
+    Np = len(X[0])
+    halfposX = np.empty(Np)
+    halfposY = np.empty(Np)
+    halfposZ = np.empty(Np)
     #Uarr = np.empty(N*(N-1)/2)
-    Utotarr = np.empty(len(X))
-    KEtotarr = np.empty(len(X))
-    for i in range (0,int(T-1)):
+    Utotarr = np.empty(len(X)-1)
+    KEtotarr = np.empty(len(X)-1)
+    for i in range (0,len(X)-1):
         Utot = 0
-        for j in range (0,N):
+        for j in range (0,Np):
             halfposX[j] = (X[i][j] + X[i+1][j]) / 2
             halfposY[j] = (Y[i][j] + Y[i+1][j]) / 2
             halfposZ[j] = (Z[i][j] + Z[i+1][j]) / 2
-        for l in range (0,N):
-            for k in range(l+1,N):
+        for l in range (0,Np):
+            for k in range(l+1,Np):
                 u = -G * (ms[l]*ms[k])/np.sqrt((halfposX[l] - halfposX[k])**2 + (halfposY[l] - halfposY[k])**2 + (halfposZ[l] - halfposZ[k])**2)
                 Utot = Utot + u
         Utotarr[i] = Utot
         Ktot = 0
-        for j in range (0,N):
+        for j in range (0,Np):
             k = 1/2 * ms[j] * (Vx[i+1][j]**2 + Vy[i+1][j]**2 + Vz[i+1][j]**2)
             Ktot = Ktot + k
         KEtotarr[i] = Ktot
@@ -340,11 +359,24 @@ def EnergyPlot(N):
     plt.plot(x, Utotarr, label = 'Potential Energy', color = 'tab:red')
     plt.plot(x, KEtotarr, label = 'Kinetic Energy', color = 'tab:purple')
     plt.plot(x, Etot, label = 'Total Energy', color = 'tab:gray')
-    plt.savefig(r'C:\Users\adidu\Documents\Work stuff\Year 3\Computing Project\Old Python Files\Energy Deviation from meanNbody.png', transparent=True)
+    plt.show()
+    plt.legend()
+    #plt.savefig(r'C:\Users\adidu\Documents\Work stuff\Year 3\Computing Project\Old Python Files\Energy Deviation from meanNbody.png', transparent=True)
     return Utotarr, KEtotarr, Etot
 
-EnergyPlot(1000)
-    
+
+N = 1000
+R = 100000
+
+odt = datetime.timedelta(days=1).total_seconds()
+oT = 365 * 60 * 60 * 24 * 1
+oTotT = oT / odt
+
+
+a,b = Posallocate(N, R)
+ani, SavedX = plotfig(oTotT, odt, R, a, b)
+#EnergyPlot(a,b)
+print(SavedX)
     
     
     

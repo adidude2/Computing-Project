@@ -228,7 +228,7 @@ autosave_enabled = True
 autosave_interval = 60
 docstring_type = Numpydoc
 strip_trailing_spaces_on_modify = False
-show_outline_in_editor_window = True
+show_outline_in_editor_window = False
 undocked_on_window_close = False
 windows_layout_settings = []
 enable = True
@@ -364,7 +364,7 @@ console/use_cwd = True
 console/use_fixed_directory = False
 startup/use_project_or_home_directory = True
 startup/use_fixed_directory = False
-history = ['C:\\Users\\adidu\\.spyder-py3', 'C:\\Users\\adidu', 'C:\\Users\\adidu\\Documents\\waveforms\\Logging\\Wind Speed Logs', 'C:\\Users\\adidu\\Documents\\Waveforms\\Logging\\New Fan Data', 'C:\\', 'C:\\Users', 'C:\\Users\\adidu\\Downloads']
+history = ['C:\\Users\\adidu', 'C:\\Users\\adidu\\.spyder-py3', 'C:\\Users\\adidu\\Documents\\waveforms\\Logging\\Wind Speed Logs', 'C:\\Users\\adidu\\Documents\\Waveforms\\Logging\\New Fan Data', 'C:\\', 'C:\\Users', 'C:\\Users\\adidu\\Downloads']
 init_workdir = None
 workdir = None
 
@@ -554,7 +554,7 @@ debugger/run selection in debugger =
 _/run file in external_terminal = 
 
 [appearance]
-css_path = C:\Users\adidu\anaconda3\envs\ppp\Lib\site-packages\spyder\plugins\help\utils\static\dark_css
+css_path = C:\Users\adidu\anaconda3\lib\site-packages\spyder\plugins\help\utils\static\dark_css
 icon_theme = spyder 3
 font/family = ['Monospace', 'DejaVu Sans Mono', 'Consolas', 'Bitstream Vera Sans Mono', 'Andale Mono', 'Liberation Mono', 'Courier New', 'Courier', 'monospace', 'Fixed', 'Terminal']
 font/size = 10
