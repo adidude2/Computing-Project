@@ -43,7 +43,7 @@ last_toolbars = ['file_toolbar', 'run_toolbar', 'debug_toolbar', 'main_toolbar',
 show_status_bar = True
 memory_usage/enable = True
 memory_usage/timeout = 2000
-cpu_usage/enable = False
+cpu_usage/enable = True
 cpu_usage/timeout = 2000
 clock/enable = False
 clock/timeout = 1000
@@ -554,7 +554,7 @@ debugger/run selection in debugger =
 _/run file in external_terminal = 
 
 [appearance]
-css_path = C:\Users\adidu\anaconda3\lib\site-packages\spyder\plugins\help\utils\static\dark_css
+css_path = C:\Users\adidu\anaconda3\envs\ppp\Lib\site-packages\spyder\plugins\help\utils\static\dark_css
 icon_theme = spyder 3
 font/family = ['Monospace', 'DejaVu Sans Mono', 'Consolas', 'Bitstream Vera Sans Mono', 'Andale Mono', 'Liberation Mono', 'Courier New', 'Courier', 'monospace', 'Fixed', 'Terminal']
 font/size = 10

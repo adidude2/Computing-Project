@@ -274,9 +274,9 @@ def plotfig(R, a, b, SavedCOM, SavedX, SavedY, SavedZ, SavedSteps, t):
         
         A, B, C = SavedCOM[frame]
 
-        X = SavedX[frame] - A
-        Y = SavedY[frame] - B
-        Z = SavedZ[frame] - C
+        X = SavedX[frame]
+        Y = SavedY[frame]
+        Z = SavedZ[frame]
         
         L = 3 * R
         ax.set_xlim(-L, L)

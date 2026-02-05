@@ -17,32 +17,12 @@ import pandas as pd
 import datetime
 import matplotlib.gridspec as gridspec
 
-
-odt = datetime.timedelta(days=1).total_seconds()
-oT = 365 * 60 * 60 * 24 * 1
-oTotT = oT / odt
-#print(f'New one {TotT}' )
-
-
-
-
-#ATTENTION ARRAYS GO ([ROW,COLUMN])
-OR = 1000
 "Define universal constants:"
 G=6.6726e-11 #N-m2/kg2
 
 
-# def Posallocate(N, R):
-#     Points = np.random.randint(-R, R, size=(int(N),3)).astype(float)
-#     mods = np.linalg.norm(Points, axis=1)
 
-#     rmin = 100   # or something physically sensible
-#     mask = (mods <= R) & (mods >= rmin)
-#     #mask = mods <= R
-#     Points = Points[mask]
-#     mods   = mods[mask]
-#     masses =  np.full(len(mods),1000)
-#     return Points, mods, masses
+
 
 def Posallocate(N, R):
     #Random Direction for vectors normalized
@@ -60,62 +40,33 @@ def Posallocate(N, R):
     return Points, masses
 
 
-#a,mass = Posallocate(1000, 1000)
-#print(len(a),len(b))
-#print(len(a[:,0]),len(a[:,1]),len(a[:,2]))
-#Xmatrix = a[:,0]
-#Ymatrix = a[:,1]
-#Zmatrix = a[:,2]
-#print(type(len(Xmatrix)))
-#print(len(Ymatrix))
-#print(len(Zmatrix))
+a,mass = Posallocate(1000, 1000)
+Xmatrix = a[:,0]
+Ymatrix = a[:,1]
+Zmatrix = a[:,2]
 
+def HaloAccel(arrx, arry, arrz, rho0, rs):
+    
+    r = np.sqrt(arrx**2 + arry**2 + arrz**2)
+    
+    r_safe = np.where(r == 0, 1e-10, r)
+    
+    x = r_safe/rs
+    
+    Menc = 4*np.pi*rho0*rs**3*(
+        
+        np.log(1+x) - x/(1+x)
+        
+        )
+    amag = -G * Menc / (r_safe**2)
 
-"""
-# Xmatrixn = Xmatrix - 3000
-# Xmatrix = np.concatenate((Xmatrixn, Xmatrix))
-# Ymatrix = np.concatenate((Ymatrix, Ymatrix))
-# Zmatrix = np.concatenate((Zmatrix, Zmatrix))
+    ax = amag * arrx / r_safe
+    ay = amag * arry / r_safe
+    az = amag * arrz / r_safe
+    
+    return ax, ay, az, Menc
 
-
-
-
-# fig = plt.figure(figsize=(10, 10))
-# ax = fig.add_subplot(projection='3d')
-# ax.set_box_aspect([1, 1, 1])
-# L = 4 * 1000
-# ax.set_xlim(-L, L)
-# ax.set_ylim(-L, L)
-# ax.set_zlim(-L, L)
-# ax.set_xticks([-L, 0, L])
-# ax.set_yticks([-L, 0, L])
-# ax.set_zticks([-L, 0, L])
-# ax.view_init(elev=15, azim=45)
-# ax.scatter(a,b,c, s=5)
-# scat = ax.scatter(a, b, c, s=5, color = 'tab:blue')
-
-# def update(frame):
-#     ax.view_init(elev=15, azim=frame)
-#     return scat,
-
-# # Animation
-# ani = FuncAnimation(
-#     fig,
-#     update,
-#     frames=360,     # full rotation
-#     interval=20     # ~60 fps on screen
-# )
-
-# # Save video
-# ani.save(
-#     r"C:/Users\adidu\Documents\Work stuff\Year 3\Computing Project\Old Python Files\Initial_Positions_Rotation.mp4",
-#     fps=60
-# )
-
-# plt.show()
-
-"""
-
+a = HaloAccel(Xmatrix, Ymatrix, Zmatrix, 4, 2)
 
 
 def force_vectorised(arrx, arry, arrz, mass):
@@ -151,6 +102,21 @@ def AccelCalc(arrx,arry, arrz, mass, t):
     ax = Fx / m
     ay = Fy / m
     az = Fz / m
+    
+    
+    hax, hay, haz = HaloAccel(
+       arrx,
+       arry,
+       arrz,
+       rho0 = 1e-16,   # tune later
+       rs   = 5*R
+    )
+
+    ax += hax
+    ay += hay
+    az += haz
+    
+    
     dvx = ax * t
     dvy = ay * t
     dvz = az * t
@@ -194,6 +160,12 @@ def RandomVels(a, Vmax):
       np.median(speeds),
       speeds.max())
     return vels
+
+def HaloVels(a, ):
+    Xmatrix = a[:,0]
+    Ymatrix = a[:,1]
+    Zmatrix = a[:,2]
+    r = np.sqrt(arrx**2 + arry**2 + Zmatrix**2)
 
 #a,b,mass = Posallocate(1000, 1000)    
 #vel =RandomVels(a, 5)
@@ -256,9 +228,9 @@ def HugeFunc(T, t, ass, mass):
         
     return SavedCOM, SavedX, SavedY, SavedZ, SavedVX, SavedVY, SavedVZ, mass, SavedSteps 
 
-def plotfig(T, t, R, a, b):
+def plotfig(R, a, b, SavedCOM, SavedX, SavedY, SavedZ, SavedSteps, t):
     
-    SavedCOM, SavedX, SavedY, SavedZ, SavedVX, SavedVY, SavedVZ, mass, SavedSteps = HugeFunc(T, t, a, b)
+    #SavedCOM, SavedX, SavedY, SavedZ, SavedVX, SavedVY, SavedVZ, mass, SavedSteps = HugeFunc(T, t, a, b)
     fig = plt.figure(figsize=(10, 10))
     ax = fig.add_subplot(projection='3d')
     ax.set_box_aspect([1, 1, 1])
@@ -274,9 +246,9 @@ def plotfig(T, t, R, a, b):
         
         A, B, C = SavedCOM[frame]
 
-        X = SavedX[frame] - A
-        Y = SavedY[frame] - B
-        Z = SavedZ[frame] - C
+        X = SavedX[frame]
+        Y = SavedY[frame]
+        Z = SavedZ[frame]
         
         L = 3 * R
         ax.set_xlim(-L, L)
@@ -315,14 +287,83 @@ def plotfig(T, t, R, a, b):
     return ani, SavedX 
 
 
+def EnergyPlot(a, b):
+    #fig, axes = plt.subplots(2, 1, figsize=(9, 7))
+    fig = plt.figure(figsize=(10, 10))
+    ax = fig.add_subplot()
+    dt = datetime.timedelta(days=1).total_seconds()
+    T = 365 * 60 * 60 * 24 * 0.5
+    TotT = int(T / dt)
+    SavedCOM, SavedX, SavedY, SavedZ, Vx, Vy, Vz, mass, SavedSteps = HugeFunc(TotT, dt, a, b)
+    ani, _ = plotfig(R, a, b, SavedCOM, SavedX, SavedY, SavedZ, SavedSteps, dt)
+    ms = mass
+    X = SavedX
+    Y = SavedY
+    Z = SavedZ
+    Np = len(X[0])
+    halfposX = np.empty(Np)
+    halfposY = np.empty(Np)
+    halfposZ = np.empty(Np)
+    #Uarr = np.empty(N*(N-1)/2)
+    Utotarr = np.empty(len(X)-1)
+    KEtotarr = np.empty(len(X)-1)
+    for i in range (0,len(X)-1):
+        #x = X[i]
+        #y = Y[i]
+        #z = Z[i]
+        Utot = 0
+        #dx = x[:,None] - x[None,:]
+        #dy = y[:,None] - y[None,:]
+        #dz = z[:,None] - z[None,:]
+        #r = np.sqrt(dx**2 + dy**2 + dz**2 + e**2)
+        Utot = 0
+        midX = 0.5 * (X[i] + X[i+1])
+        midY = 0.5 * (Y[i] + Y[i+1])
+        midZ = 0.5 * (Z[i] + Z[i+1])
+        positions = np.stack([midX, midY, midZ], axis=1)
+        d = positions[:,None,:] - positions[None,:,:]
+        r = np.sqrt(np.sum(d*d,axis=2)+e**2)
+        U = -G * (ms[:,None]*ms[None,:]) / r
+        np.fill_diagonal(U,0)
+        Utot = np.sum(U)/2
+        Utotarr[i] = Utot
+        
+        
+        Ktot = 0
+        vx = Vx[i+1]
+        vy = Vy[i+1]
+        vz = Vz[i+1]
+        v2 = vx**2 + vy**2 + vz**2
+        Ktot = 0.5 * np.sum(ms * v2)
+        KEtotarr[i] = Ktot
+    Etot = Utotarr + KEtotarr
+    Uavg = np.mean(Utotarr)
+    Kavg = np.mean(KEtotarr)
+    Tavg = np.mean(Etot)
+    x = np.linspace(0, T, len(Utotarr))/(60*60*24*365)
+    ax.plot(x, Utotarr, label = 'Potential Energy', color = 'tab:red')
+    ax.plot(x, KEtotarr, label = 'Kinetic Energy', color = 'tab:purple')
+    ax.plot(x, Etot, label = 'Total Energy', color = 'tab:gray')
+    ax.legend()
+    fig.savefig(r'C:\Users\adidu\Documents\Work stuff\Year 3\Computing Project\Old Python Files\Energy Deviation from meanNbody.png', transparent=True)
+    return Utotarr, KEtotarr, Etot, ani, fig
+
+
 N = 1000
 R = 1000#100000
-e = 0.01*R
+e = 0.1*R
 
 odt = datetime.timedelta(days=1).total_seconds()
-oT = 365 * 60 * 60 * 24 * 0.5
+oT = 365 * 60 * 60 * 24 * 1
 oTotT = oT / odt
 
 
 a,b = Posallocate(N, R)
-ani, SavedX = plotfig(oTotT, odt, R, a, b)
+#ani, SavedX = plotfig(oTotT, odt, R, a, b)
+U, KE, E, ani, fig = EnergyPlot(a,b)
+#print(SavedX)
+
+
+
+
+
