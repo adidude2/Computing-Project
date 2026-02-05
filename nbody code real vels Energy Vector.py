@@ -256,9 +256,9 @@ def HugeFunc(T, t, ass, mass):
         
     return SavedCOM, SavedX, SavedY, SavedZ, SavedVX, SavedVY, SavedVZ, mass, SavedSteps 
 
-def plotfig(T, t, R, a, b):
+def plotfig(R, a, b, SavedCOM, SavedX, SavedY, SavedZ, SavedSteps, t):
     
-    SavedCOM, SavedX, SavedY, SavedZ, SavedVX, SavedVY, SavedVZ, mass, SavedSteps = HugeFunc(T, t, a, b)
+    #SavedCOM, SavedX, SavedY, SavedZ, SavedVX, SavedVY, SavedVZ, mass, SavedSteps = HugeFunc(T, t, a, b)
     fig = plt.figure(figsize=(10, 10))
     ax = fig.add_subplot(projection='3d')
     ax.set_box_aspect([1, 1, 1])
@@ -318,10 +318,12 @@ def plotfig(T, t, R, a, b):
 def EnergyPlot(a, b):
     #fig, axes = plt.subplots(2, 1, figsize=(9, 7))
     fig = plt.figure(figsize=(10, 10))
+    ax = fig.add_subplot()
     dt = datetime.timedelta(days=1).total_seconds()
     T = 365 * 60 * 60 * 24 * 0.5
     TotT = int(T / dt)
     SavedCOM, SavedX, SavedY, SavedZ, Vx, Vy, Vz, mass, SavedSteps = HugeFunc(TotT, dt, a, b)
+    ani, _ = plotfig(R, a, b, SavedCOM, SavedX, SavedY, SavedZ, SavedSteps, dt)
     ms = mass
     X = SavedX
     Y = SavedY
@@ -334,33 +336,45 @@ def EnergyPlot(a, b):
     Utotarr = np.empty(len(X)-1)
     KEtotarr = np.empty(len(X)-1)
     for i in range (0,len(X)-1):
+        #x = X[i]
+        #y = Y[i]
+        #z = Z[i]
         Utot = 0
-        for j in range (0,Np):
-            halfposX[j] = (X[i][j] + X[i+1][j]) / 2
-            halfposY[j] = (Y[i][j] + Y[i+1][j]) / 2
-            halfposZ[j] = (Z[i][j] + Z[i+1][j]) / 2
-        for l in range (0,Np):
-            for k in range(l+1,Np):
-                u = -G * (ms[l]*ms[k])/np.sqrt((halfposX[l] - halfposX[k])**2 + (halfposY[l] - halfposY[k])**2 + (halfposZ[l] - halfposZ[k])**2)
-                Utot = Utot + u
+        #dx = x[:,None] - x[None,:]
+        #dy = y[:,None] - y[None,:]
+        #dz = z[:,None] - z[None,:]
+        #r = np.sqrt(dx**2 + dy**2 + dz**2 + e**2)
+        Utot = 0
+        midX = 0.5 * (X[i] + X[i+1])
+        midY = 0.5 * (Y[i] + Y[i+1])
+        midZ = 0.5 * (Z[i] + Z[i+1])
+        positions = np.stack([midX, midY, midZ], axis=1)
+        d = positions[:,None,:] - positions[None,:,:]
+        r = np.sqrt(np.sum(d*d,axis=2)+e**2)
+        U = -G * (ms[:,None]*ms[None,:]) / r
+        np.fill_diagonal(U,0)
+        Utot = np.sum(U)/2
         Utotarr[i] = Utot
+        
+        
         Ktot = 0
-        for j in range (0,Np):
-            k = 1/2 * ms[j] * (Vx[i+1][j]**2 + Vy[i+1][j]**2 + Vz[i+1][j]**2)
-            Ktot = Ktot + k
+        vx = Vx[i+1]
+        vy = Vy[i+1]
+        vz = Vz[i+1]
+        v2 = vx**2 + vy**2 + vz**2
+        Ktot = 0.5 * np.sum(ms * v2)
         KEtotarr[i] = Ktot
     Etot = Utotarr + KEtotarr
     Uavg = np.mean(Utotarr)
     Kavg = np.mean(KEtotarr)
     Tavg = np.mean(Etot)
     x = np.linspace(0, T, len(Utotarr))/(60*60*24*365)
-    plt.plot(x, Utotarr, label = 'Potential Energy', color = 'tab:red')
-    plt.plot(x, KEtotarr, label = 'Kinetic Energy', color = 'tab:purple')
-    plt.plot(x, Etot, label = 'Total Energy', color = 'tab:gray')
-    plt.show()
-    plt.legend()
-    plt.savefig(r'C:\Users\adidu\Documents\Work stuff\Year 3\Computing Project\Old Python Files\Energy Deviation from meanNbody.png', transparent=True)
-    return Utotarr, KEtotarr, Etot
+    ax.plot(x, Utotarr, label = 'Potential Energy', color = 'tab:red')
+    ax.plot(x, KEtotarr, label = 'Kinetic Energy', color = 'tab:purple')
+    ax.plot(x, Etot, label = 'Total Energy', color = 'tab:gray')
+    ax.legend()
+    fig.savefig(r'C:\Users\adidu\Documents\Work stuff\Year 3\Computing Project\Old Python Files\Energy Deviation from meanNbody.png', transparent=True)
+    return Utotarr, KEtotarr, Etot, ani, fig
 
 
 N = 1000
@@ -368,14 +382,14 @@ R = 1000#100000
 e = 0.01*R
 
 odt = datetime.timedelta(days=1).total_seconds()
-oT = 365 * 60 * 60 * 24 * 5
+oT = 365 * 60 * 60 * 24 * 0.5
 oTotT = oT / odt
 
 
 a,b = Posallocate(N, R)
-ani, SavedX = plotfig(oTotT, odt, R, a, b)
-EnergyPlot(a,b)
-print(SavedX)
+#ani, SavedX = plotfig(oTotT, odt, R, a, b)
+U, KE, E, ani, fig = EnergyPlot(a,b)
+#print(SavedX)
     
     
     
