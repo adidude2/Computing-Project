@@ -18,32 +18,32 @@ import datetime
 import matplotlib.gridspec as gridspec
 
 "Define universal constants:"
-G=6.6726e-11 #N-m2/kg2
+#G=6.6726e-11 #N-m2/kg2
+G=1
 
 
+"ATTENTION ARRAYS GO ([ROW,COLUMN])"
 
 
-
-def Posallocate(N, R):
-    #Random Direction for vectors normalized
-    r = np.random.normal(size=(int(N),3))
-    rhat = r / np.linalg.norm(r, axis=1)[:, None]
-
-    #Random Radius with uniform volume density
+def Posallocate(N, R, M):
     u = np.random.rand(N)
-    r = R * u**(1/3)
-
-    #Combine Radius and Direction
-    Points = rhat * r[:, None] 
+    radius = R * np.sqrt(u)
+    #Random Direction for vectors normalized
+    phi = np.random.rand(N) * 2 * np.pi
+    x = radius * np.cos(phi)
+    y = radius * np.sin(phi)
+    z = np.random.normal(scale=0.01, size=N)
     
-    masses =  np.full(N, 10000)# 1e25/N)
+    Points = np.column_stack((x,y,z))
+    
+    masses =  np.full(N, M/N)# 1e25/N)
     return Points, masses
 
 
-a,mass = Posallocate(1000, 1000)
-Xmatrix = a[:,0]
-Ymatrix = a[:,1]
-Zmatrix = a[:,2]
+#a,mass = Posallocate(1000, 1000, 100000)
+#Xmatrix = a[:,0]
+#Ymatrix = a[:,1]
+#Zmatrix = a[:,2]
 
 def HaloAccel(arrx, arry, arrz, rho0, rs):
     
@@ -66,7 +66,7 @@ def HaloAccel(arrx, arry, arrz, rho0, rs):
     
     return ax, ay, az, Menc
 
-a = HaloAccel(Xmatrix, Ymatrix, Zmatrix, 4, 2)
+#a = HaloAccel(Xmatrix, Ymatrix, Zmatrix, 4, 2)
 
 
 def force_vectorised(arrx, arry, arrz, mass):
@@ -108,8 +108,8 @@ def AccelCalc(arrx,arry, arrz, mass, t):
        arrx,
        arry,
        arrz,
-       rho0 = 1e-16,   # tune later
-       rs   = 5*R
+       rho0 = 1#1e-16,   # tune later
+       rs   = 1#5*R
     )
 
     ax += hax
@@ -141,19 +141,21 @@ def RandomVels(a, Vmax):
     Ymatrix = a[:,1]
     Zmatrix = a[:,2]
     L =len(Xmatrix)
-    V = np.random.randn(L, 3)
+    anew = np.column_stack((Xmatrix,Ymatrix))
+    V = np.random.randn(L, 2)
     #a = np.array([[1,0,0],[0,1,0]])
     #V = np.array([[1,1,0],[0,1,1]])
-    aa = np.sum(a * a, axis=1)
-    dot = np.sum(V * a, axis=1)
+    aa = np.sum(anew * anew, axis=1)
+    dot = np.sum(V * anew, axis=1)
     
-    V_perp = V - (dot / aa)[:, None] * a
+    V_perp = V - (dot / aa)[:, None] * anew
     norms = np.linalg.norm(V_perp, axis=1)
     Vhat = V_perp / norms[:, None]
 
     # Assign controlled speed
     speeds = np.random.uniform(0, Vmax, size=L)
-    vels = speeds[:, None] * Vhat
+    velsxy = speeds[:, None] * Vhat
+    vels = np.column_stack((velsxy,np.zeros(L)))
     speeds = np.linalg.norm(vels, axis=1)
     print("speed min/median/max:",
       speeds.min(),
@@ -161,15 +163,11 @@ def RandomVels(a, Vmax):
       speeds.max())
     return vels
 
-def HaloVels(a, ):
-    Xmatrix = a[:,0]
-    Ymatrix = a[:,1]
-    Zmatrix = a[:,2]
-    r = np.sqrt(arrx**2 + arry**2 + Zmatrix**2)
 
-#a,b,mass = Posallocate(1000, 1000)    
-#vel =RandomVels(a, 5)
-#print(vel)
+a,b = Posallocate(1000, 1000,1000)    
+vel =RandomVels(a, 5)
+print(vel)
+#print(len(a[:,0]))
 
 
 def HugeFunc(T, t, ass, mass):
@@ -349,8 +347,9 @@ def EnergyPlot(a, b):
     return Utotarr, KEtotarr, Etot, ani, fig
 
 
-N = 1000
-R = 1000#100000
+N = 500
+R = 5#100000
+M = 10000
 e = 0.1*R
 
 odt = datetime.timedelta(days=1).total_seconds()
@@ -358,9 +357,9 @@ oT = 365 * 60 * 60 * 24 * 1
 oTotT = oT / odt
 
 
-a,b = Posallocate(N, R)
+#a,b = Posallocate(N, R, M)
 #ani, SavedX = plotfig(oTotT, odt, R, a, b)
-U, KE, E, ani, fig = EnergyPlot(a,b)
+#U, KE, E, ani, fig = EnergyPlot(a,b)
 #print(SavedX)
 
 

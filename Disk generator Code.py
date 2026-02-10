@@ -28,22 +28,16 @@ def Posallocate(N, R):
     radius = R * np.sqrt(u)
     #Random Direction for vectors normalized
     phi = np.random.rand(N) * 2 * np.pi
-    #RR = np.random.rand(size=(int(N))) * R
-    #r = np.random.normal(size=(int(N),2))
     x = radius * np.cos(phi)
     y = radius * np.sin(phi)
     z = np.random.normal(scale=0.01, size=N)
-    #z = np.zeros(N)
-    #z= np.random.normal(size=(int(N))) * 0.2
-    #r = np.column_stack((x,y,z))
-    #r = np.column_stack((rxy,z))
     
     Points = np.column_stack((x,y,z))
     
-    masses =  np.full(N, 10000)# 1e25/N)
+    masses =  np.full(N, 1000)# 1e25/N)
     return Points, masses
 
-z,mass = Posallocate(10000, 1)
+z,mass = Posallocate(100, 1)
 print(z)#,len(mass))
 print(len(z[:,0]),len(z[:,1]),len(z[:,2]))
 a = Xmatrix = z[:,0]
