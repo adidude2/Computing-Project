@@ -63,7 +63,7 @@ def HaloAccel(arrx, arry, arrz, rho0, rs):
     ay = amag * arry / r_safe
     az = amag * arrz / r_safe
     
-    return ax, ay, az
+    return ax, ay, az, Menc
 
 #a = HaloAccel(Xmatrix, Ymatrix, Zmatrix, 4, 2)
 
@@ -103,7 +103,7 @@ def AccelCalc(arrx,arry, arrz, mass, t):
     az = Fz / m
     
     
-    hax, hay, haz = HaloAccel(
+    hax, hay, haz, M = HaloAccel(
        arrx,
        arry,
        arrz,
@@ -111,9 +111,9 @@ def AccelCalc(arrx,arry, arrz, mass, t):
        rs   = 1e19#5*R
     )
 
-    ax += hax
-    ay += hay
-    az += haz
+    #ax += hax
+    #ay += hay
+    #az += haz
     
     
     dvx = ax * t
@@ -135,18 +135,20 @@ def COMCalc(arrx,arry, arrz, mass):
 #print(x, y)
 
 
-def RandomVels(a, Vmax):
+def HaloVels(a, Vmax, Menc):
     Xmatrix = a[:,0]
     Ymatrix = a[:,1]
     Zmatrix = a[:,2]
     L =len(Xmatrix)
     anew = np.column_stack((Xmatrix,Ymatrix))
-    V = np.random.randn(L, 2)
+    r = np.sqrt(Xmatrix**2 + Ymatrix**2)
+    r_safe = np.where(r == 0, 1e-10, r)
+
     #a = np.array([[1,0,0],[0,1,0]])
     #V = np.array([[1,1,0],[0,1,1]])
     #aa = np.sum(anew * anew, axis=1)
     #dot = np.sum(V * anew, axis=1)
-    
+    #V = np.random.randn(L, 2)
     #V_perp = V - (dot / aa)[:, None] * anew
     
     
@@ -155,8 +157,9 @@ def RandomVels(a, Vmax):
     Vhat = anew / norms[:, None]
 
     # Assign controlled speed
-    speeds = np.random.uniform(0, Vmax, size=L)
-    velsxy = speeds[:, None] * Vhat
+    CircSpeed = np.sqrt(G * Menc / r_safe)
+    #speeds = np.random.uniform(0, Vmax, size=L)
+    velsxy = CircSpeed[:, None] * Vhat
     vels = np.column_stack((velsxy,np.zeros(L)))
     speeds = np.linalg.norm(vels, axis=1)
     print("speed min/median/max:",
@@ -165,31 +168,57 @@ def RandomVels(a, Vmax):
       speeds.max())
     return vels
 
+def NonHaloVels(a, Vmax, mass):
+    Xmatrix = a[:,0]
+    Ymatrix = a[:,1]
+    Zmatrix = a[:,2]
+    L =len(Xmatrix)
+
+    
+    
+    r = np.sqrt(Xmatrix**2 + Ymatrix**2)
+    sort_idx = np.argsort(r)
+    a_sorted = a[sort_idx]
+    r_sorted = np.sqrt(a_sorted[:,0]**2 + a_sorted[:,1]**2)
+    r_safe = np.where(r_sorted == 0, 1e-10, r_sorted)
+    Menc = np.cumsum(mass)
+    CircSpeed = np.sqrt(G * Menc / r_safe)
+    
+    anew = np.column_stack((-a_sorted[:,1], a_sorted[:,0]))
+    norms = np.linalg.norm(anew, axis=1)
+    Vhat = anew / norms[:, None]
+    velsxy = CircSpeed[:, None] * Vhat
+    vels_sorted = np.column_stack((velsxy,np.zeros(L)))
+    unsort_idx = np.argsort(sort_idx)
+    vels = vels_sorted[unsort_idx]
+    return vels
+
 
 a,b = Posallocate(1000, 1000,1000)    
-vel =RandomVels(a, 5)
-print(vel)
+#vel =RandomVels(a, 5)
+#print(vel)
 #print(len(a[:,0]))
 
 
-def HugeFunc(T, t, ass, mass, v):
+def HugeFunc(T, t, ass, mass, v, rho0, rs):
     a = ass
     Xmatrix = a[:,0]
     Ymatrix = a[:,1]
     Zmatrix = a[:,2]
+    hax, hay, haz, Menc = HaloAccel(
+       Xmatrix,
+       Ymatrix,
+       Zmatrix,
+       rho0,
+       rs
+    )
     
     
-    # Xmatrixl = Xmatrix - 10000
-    # Xmatrixr = Xmatrix + 1000
-    # Xmatrix = np.concatenate((Xmatrixl, Xmatrixr))
-    # Ymatrix = np.concatenate((Ymatrix, Ymatrix))
-    # Zmatrix = np.concatenate((Zmatrix, Zmatrix))  
-    # mass =  np.concatenate((mass,mass))
+
     
-    vel = RandomVels(a, v)
-    #VXmatrix = np.zeros(len(Xmatrix))
-    #VYmatrix = np.zeros(len(Xmatrix))
-    #VZmatrix = np.zeros(len(Xmatrix))
+    #vel = HaloVels(a, v, Menc)
+    vel = NonHaloVels(a, Vmax, mass)
+    
     VXmatrix = vel[:,0]
     VYmatrix = vel[:,1]
     VZmatrix = vel[:,2]
@@ -225,8 +254,7 @@ def HugeFunc(T, t, ass, mass, v):
         Xmatrix += VXmatrix * t
         Ymatrix += VYmatrix * t
         Zmatrix += VZmatrix * t
-    print("mean radius:", np.mean(np.sqrt(Xmatrix**2+Ymatrix**2)))
-    print("mean speed:", np.mean(np.sqrt(VXmatrix**2+VYmatrix**2+VZmatrix**2)))    
+    print("v_dot_r:", VXmatrix*Xmatrix + VYmatrix*Ymatrix) 
     return SavedCOM, SavedX, SavedY, SavedZ, SavedVX, SavedVY, SavedVZ, mass, SavedSteps 
 
 def plotfig(R, a, b, SavedCOM, SavedX, SavedY, SavedZ, SavedSteps, t):
@@ -288,11 +316,11 @@ def plotfig(R, a, b, SavedCOM, SavedX, SavedY, SavedZ, SavedSteps, t):
     return ani, SavedX 
 
 
-def EnergyPlot(T, t, a, b, v, R):
+def EnergyPlot(T, t, a, b, v, R, rho0, rs):
     #fig, axes = plt.subplots(2, 1, figsize=(9, 7))
     fig = plt.figure(figsize=(10, 10))
     ax = fig.add_subplot()
-    SavedCOM, SavedX, SavedY, SavedZ, Vx, Vy, Vz, mass, SavedSteps = HugeFunc(T, t, a, b, v)
+    SavedCOM, SavedX, SavedY, SavedZ, Vx, Vy, Vz, mass, SavedSteps = HugeFunc(T, t, a, b, v, rho0, rs)
     ani, _ = plotfig(R, a, b, SavedCOM, SavedX, SavedY, SavedZ, SavedSteps, t)
     ms = mass
     X = SavedX
@@ -343,13 +371,16 @@ def EnergyPlot(T, t, a, b, v, R):
     Uavg = np.mean(Utotarr)
     Kavg = np.mean(KEtotarr)
     Tavg = np.mean(Etot)
-    x = np.linspace(0, T, len(Utotarr))/(60*60*24*365)
+    x = SavedSteps[:-1]
     ax.plot(x, Utotarr, label = 'Potential Energy', color = 'tab:red')
     ax.plot(x, KEtotarr, label = 'Kinetic Energy', color = 'tab:purple')
     ax.plot(x, Etot, label = 'Total Energy', color = 'tab:gray')
     ax.plot(x, Virtotarr, label = 'Virial Energy', color = 'tab:blue')
     ax.legend()
     fig.savefig(r'C:\Users\adidu\Documents\Work stuff\Year 3\Computing Project\Old Python Files\Energy Deviation from meanNbody.png', transparent=True)
+    print(len(Utotarr))
+    print(len(SavedSteps))
+    print(t)
     return Utotarr, KEtotarr, Etot, ani, fig
 
 
@@ -358,6 +389,8 @@ R = 5e19#100000
 M = 1e38
 e = 1e18#0.1*R
 Vmax = 1e4
+Rho0 = 1e-20
+rs = 1e19
 
 odt = 1e13#datetime.timedelta(days=1).total_seconds()
 T_orbit = 4e15
@@ -367,7 +400,7 @@ print(odt)
 
 a,b = Posallocate(N, R, M)
 #ani, SavedX = plotfig(oTotT, odt, R, a, b)
-U, KE, E, ani, fig = EnergyPlot(oTotT, odt , a,b, Vmax, R)
+U, KE, E, ani, fig = EnergyPlot(oTotT, odt , a,b, Vmax, R, Rho0, rs)
 #print(SavedX)
 
 
