@@ -62,7 +62,6 @@ def HaloAccel(arrx, arry, arrz, rho0, rs):
     ax = amag * arrx / r_safe
     ay = amag * arry / r_safe
     az = amag * arrz / r_safe
-    
     return ax, ay, az, Menc
 
 #a = HaloAccel(Xmatrix, Ymatrix, Zmatrix, 4, 2)
@@ -95,7 +94,7 @@ def force_vectorised(arrx, arry, arrz, mass):
 #print(force_vectorised(a[:,0],a[:,1],a[:,2], mass))
 
 
-def AccelCalc(arrx,arry, arrz, mass, t):
+def AccelCalc(arrx,arry, arrz, mass, t, rho0, rs):
     Fx, Fy, Fz = force_vectorised(arrx, arry, arrz, mass)
     m = mass
     ax = Fx / m
@@ -107,8 +106,8 @@ def AccelCalc(arrx,arry, arrz, mass, t):
        arrx,
        arry,
        arrz,
-       rho0 = 1e-20, #1e-16,   # tune later
-       rs   = 1e19#5*R
+       rho0,# = 1e-20, #1e-16,   # tune later
+       rs#   = 1e19#5*R
     )
 
     #ax += hax
@@ -143,15 +142,7 @@ def HaloVels(a, Vmax, Menc):
     anew = np.column_stack((Xmatrix,Ymatrix))
     r = np.sqrt(Xmatrix**2 + Ymatrix**2)
     r_safe = np.where(r == 0, 1e-10, r)
-
-    #a = np.array([[1,0,0],[0,1,0]])
-    #V = np.array([[1,1,0],[0,1,1]])
-    #aa = np.sum(anew * anew, axis=1)
-    #dot = np.sum(V * anew, axis=1)
-    #V = np.random.randn(L, 2)
-    #V_perp = V - (dot / aa)[:, None] * anew
-    
-    
+  
     anew = np.column_stack((-Ymatrix,Xmatrix))
     norms = np.linalg.norm(anew, axis=1)
     Vhat = anew / norms[:, None]
@@ -162,10 +153,10 @@ def HaloVels(a, Vmax, Menc):
     velsxy = CircSpeed[:, None] * Vhat
     vels = np.column_stack((velsxy,np.zeros(L)))
     speeds = np.linalg.norm(vels, axis=1)
-    print("speed min/median/max:",
-      speeds.min(),
-      np.median(speeds),
-      speeds.max())
+    # print("speed min/median/max:",
+    #   speeds.min(),
+    #   np.median(speeds),
+    #   speeds.max())
     return vels
 
 def NonHaloVels(a, Vmax, mass):
@@ -243,7 +234,7 @@ def HugeFunc(T, t, ass, mass, v, rho0, rs):
             SavedVZ.append(VZmatrix.copy())
             SavedSteps.append(i)
             
-        dvx, dvy, dvz = AccelCalc(Xmatrix, Ymatrix, Zmatrix, mass, t)
+        dvx, dvy, dvz = AccelCalc(Xmatrix, Ymatrix, Zmatrix, mass, t, rho0 ,rs)
         Radius = np.sqrt((Xmatrix - A)**2 + (Ymatrix - B)**2 + (Zmatrix - C)**2)
         
         
@@ -254,7 +245,7 @@ def HugeFunc(T, t, ass, mass, v, rho0, rs):
         Xmatrix += VXmatrix * t
         Ymatrix += VYmatrix * t
         Zmatrix += VZmatrix * t
-    print("v_dot_r:", VXmatrix*Xmatrix + VYmatrix*Ymatrix) 
+    #print("v_dot_r:", VXmatrix*Xmatrix + VYmatrix*Ymatrix) 
     return SavedCOM, SavedX, SavedY, SavedZ, SavedVX, SavedVY, SavedVZ, mass, SavedSteps 
 
 def plotfig(R, a, b, SavedCOM, SavedX, SavedY, SavedZ, SavedSteps, t):
@@ -298,9 +289,9 @@ def plotfig(R, a, b, SavedCOM, SavedX, SavedY, SavedZ, SavedSteps, t):
             Z,
             s=5
         )
-        ax.view_init(elev=15, azim=90)#+frame)  # elev is fixed, azim changes each frame
-        
-        ax.set_title(f"Time (years) = {SavedSteps[frame]*(int(t/(3600*24*365)))}")
+        ax.view_init(elev=90, azim=90)#+frame)  # elev is fixed, azim changes each frame
+        time_gyr = (SavedSteps[frame] * t) / (1e9 * 3600*24*365)
+        ax.set_title(f"Time (Gyr) = {time_gyr:.3f}")
     
     ani = FuncAnimation(
         fig,
@@ -371,11 +362,14 @@ def EnergyPlot(T, t, a, b, v, R, rho0, rs):
     Uavg = np.mean(Utotarr)
     Kavg = np.mean(KEtotarr)
     Tavg = np.mean(Etot)
-    x = SavedSteps[:-1]
+    seconds_per_year = 1e9 * 3600 * 24 * 365
+    x = (np.array(SavedSteps[:-1]) * t) / seconds_per_year
     ax.plot(x, Utotarr, label = 'Potential Energy', color = 'tab:red')
     ax.plot(x, KEtotarr, label = 'Kinetic Energy', color = 'tab:purple')
     ax.plot(x, Etot, label = 'Total Energy', color = 'tab:gray')
     ax.plot(x, Virtotarr, label = 'Virial Energy', color = 'tab:blue')
+    ax.set_xlabel("Time (Gyrs)")
+    ax.set_ylabel("Energy (J)")
     ax.legend()
     fig.savefig(r'C:\Users\adidu\Documents\Work stuff\Year 3\Computing Project\Old Python Files\Energy Deviation from meanNbody.png', transparent=True)
     print(len(Utotarr))
@@ -393,16 +387,23 @@ Rho0 = 1e-20
 rs = 1e19
 
 odt = 1e13#datetime.timedelta(days=1).total_seconds()
-T_orbit = 4e15
+T_orbit = 4e15*10
 oT = T_orbit
 oTotT = oT / odt
 print(odt)
 
 a,b = Posallocate(N, R, M)
-#ani, SavedX = plotfig(oTotT, odt, R, a, b)
+#ani, SavedX = plotfig(oTotT,  odt, R, a, b)
 U, KE, E, ani, fig = EnergyPlot(oTotT, odt , a,b, Vmax, R, Rho0, rs)
 #print(SavedX)
 
+
+"""
+
+SHOW THE PLOT FROM ABOVE SINCE YOURE NOT EVEN SHOWING THE Z DIRECTION ANYWAY
+ALSO REMEMBER TO CHANGE THE INITIAL VELS CALC IN THE BIG FUNC ANDDDD THE ACCEL CALC WHEN IM INCULDING THE HALO AND NOT
+
+"""
 
 
 
