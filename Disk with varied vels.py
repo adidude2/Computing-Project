@@ -44,19 +44,34 @@ def Posallocate(N, R, M):
 #Ymatrix = a[:,1]
 #Zmatrix = a[:,2]
 
-def HaloAccel(arrx, arry, arrz, rho0, rs):
+def HaloAccel(arrx, arry, arrz, Mhalo, Rvir, c):
     
     r = np.sqrt(arrx**2 + arry**2 + arrz**2)
     
     r_safe = np.where(r == 0, 1e-10, r)
     
-    x = r_safe/rs
+    Rs = Rvir / c
     
-    Menc = 4*np.pi*rho0*rs**3*(
+    V = 4 * np.pi * Rs**3 * (
         
-        np.log(1+x) - x/(1+x)
+        np.log(1+c) - c/(1+c)
         
         )
+    
+    rho0 = Mhalo / V
+    
+    # rhor = rho0/( 
+        
+    #     (r_safe/Rs)*(1+(r_safe/Rs))**2
+        
+    #     )
+    
+    Menc = 4 * np.pi * rho0 * Rs**3 * (
+        
+        np.log((Rs+r)/Rs) - r/(Rs+r)
+        
+        )
+    
     amag = -G * Menc / (r_safe**2)
 
     ax = amag * arrx / r_safe
@@ -64,6 +79,7 @@ def HaloAccel(arrx, arry, arrz, rho0, rs):
     az = amag * arrz / r_safe
     return ax, ay, az, Menc
 
+    
 #a = HaloAccel(Xmatrix, Ymatrix, Zmatrix, 4, 2)
 
 
@@ -94,7 +110,7 @@ def force_vectorised(arrx, arry, arrz, mass):
 #print(force_vectorised(a[:,0],a[:,1],a[:,2], mass))
 
 
-def AccelCalc(arrx,arry, arrz, mass, t, rho0, rs):
+def AccelCalc(arrx,arry, arrz, mass, t, Mhalo, Rvir, c):
     Fx, Fy, Fz = force_vectorised(arrx, arry, arrz, mass)
     m = mass
     ax = Fx / m
@@ -106,13 +122,14 @@ def AccelCalc(arrx,arry, arrz, mass, t, rho0, rs):
        arrx,
        arry,
        arrz,
-       rho0,# = 1e-20, #1e-16,   # tune later
-       rs#   = 1e19#5*R
+       Mhalo,
+       Rvir,
+       c
     )
 
-    #ax += hax
-    #ay += hay
-    #az += haz
+    ax += hax
+    ay += hay
+    az += haz
     
     
     dvx = ax * t
@@ -134,32 +151,42 @@ def COMCalc(arrx,arry, arrz, mass):
 #print(x, y)
 
 
-def HaloVels(a, Vmax, Menc):
+def HaloVels(a, Menc, mass):
     Xmatrix = a[:,0]
     Ymatrix = a[:,1]
     Zmatrix = a[:,2]
     L =len(Xmatrix)
-    anew = np.column_stack((Xmatrix,Ymatrix))
     r = np.sqrt(Xmatrix**2 + Ymatrix**2)
-    r_safe = np.where(r == 0, 1e-10, r)
-  
-    anew = np.column_stack((-Ymatrix,Xmatrix))
-    norms = np.linalg.norm(anew, axis=1)
-    Vhat = anew / norms[:, None]
+    sort_idx = np.argsort(r)
 
-    # Assign controlled speed
-    CircSpeed = np.sqrt(G * Menc / r_safe)
-    #speeds = np.random.uniform(0, Vmax, size=L)
-    velsxy = CircSpeed[:, None] * Vhat
-    vels = np.column_stack((velsxy,np.zeros(L)))
-    speeds = np.linalg.norm(vels, axis=1)
-    # print("speed min/median/max:",
-    #   speeds.min(),
-    #   np.median(speeds),
-    #   speeds.max())
-    return vels
+    r_sorted = r[sort_idx]
+    r_safe = np.where(r_sorted == 0, 1e-10, r_sorted)
 
-def NonHaloVels(a, Vmax, mass):
+    # Stellar enclosed mass
+    m_sorted = mass[sort_idx]
+    Mstar_enc = np.cumsum(m_sorted)
+
+    # Halo enclosed mass
+    Mhalo_sorted = Menc[sort_idx]
+
+    # Total enclosed mass
+    Mtot = Mhalo_sorted + Mstar_enc
+
+    CircSpeed = np.sqrt(G * Mtot / r_safe)
+
+    # Tangential direction
+    a_sorted = a[sort_idx]
+    tangent = np.column_stack((-a_sorted[:,1], a_sorted[:,0]))
+    norms = np.linalg.norm(tangent, axis=1)
+    Vhat = tangent / norms[:, None]
+
+    vels_sorted = np.column_stack((CircSpeed[:,None] * Vhat, np.zeros(L)))
+
+    # Unsort
+    unsort_idx = np.argsort(sort_idx)
+    return vels_sorted[unsort_idx]
+
+def NonHaloVels(a, mass):
     Xmatrix = a[:,0]
     Ymatrix = a[:,1]
     Zmatrix = a[:,2]
@@ -172,7 +199,8 @@ def NonHaloVels(a, Vmax, mass):
     a_sorted = a[sort_idx]
     r_sorted = np.sqrt(a_sorted[:,0]**2 + a_sorted[:,1]**2)
     r_safe = np.where(r_sorted == 0, 1e-10, r_sorted)
-    Menc = np.cumsum(mass)
+    m_sorted = mass[sort_idx]
+    Menc = np.cumsum(m_sorted)
     CircSpeed = np.sqrt(G * Menc / r_safe)
     
     anew = np.column_stack((-a_sorted[:,1], a_sorted[:,0]))
@@ -191,29 +219,30 @@ a,b = Posallocate(1000, 1000,1000)
 #print(len(a[:,0]))
 
 
-def HugeFunc(T, t, ass, mass, v, rho0, rs):
+def HugeFunc(T, t, ass, mass, Mhalo, Rvir, c):
     a = ass
     Xmatrix = a[:,0]
     Ymatrix = a[:,1]
     Zmatrix = a[:,2]
+    
     hax, hay, haz, Menc = HaloAccel(
        Xmatrix,
        Ymatrix,
        Zmatrix,
-       rho0,
-       rs
+       Mhalo,
+       Rvir,
+       c
     )
     
     
 
     
-    #vel = HaloVels(a, v, Menc)
-    vel = NonHaloVels(a, Vmax, mass)
+    vel = HaloVels(a, Menc, mass)
+    #vel = NonHaloVels(a, mass)
     
     VXmatrix = vel[:,0]
     VYmatrix = vel[:,1]
     VZmatrix = vel[:,2]
-    Radius = np.zeros(len(Xmatrix))
     SavedX = []
     SavedY = []
     SavedZ = []
@@ -234,23 +263,28 @@ def HugeFunc(T, t, ass, mass, v, rho0, rs):
             SavedVZ.append(VZmatrix.copy())
             SavedSteps.append(i)
             
-        dvx, dvy, dvz = AccelCalc(Xmatrix, Ymatrix, Zmatrix, mass, t, rho0 ,rs)
-        Radius = np.sqrt((Xmatrix - A)**2 + (Ymatrix - B)**2 + (Zmatrix - C)**2)
+        dvx, dvy, dvz = AccelCalc(Xmatrix, Ymatrix, Zmatrix, mass, t, Mhalo, Rvir, c)
         
         
-        VXmatrix += dvx
-        VYmatrix += dvy
-        VZmatrix += dvz
+        VXmatrix += 0.5 * dvx
+        VYmatrix += 0.5 * dvy
+        VZmatrix += 0.5 * dvz
 
         Xmatrix += VXmatrix * t
         Ymatrix += VYmatrix * t
         Zmatrix += VZmatrix * t
+        
+        dvx, dvy, dvz = AccelCalc(Xmatrix, Ymatrix, Zmatrix, mass, t, Mhalo, Rvir, c)
+        
+        VXmatrix += 0.5 * dvx
+        VYmatrix += 0.5 * dvy
+        VZmatrix += 0.5 * dvz
+        
     #print("v_dot_r:", VXmatrix*Xmatrix + VYmatrix*Ymatrix) 
     return SavedCOM, SavedX, SavedY, SavedZ, SavedVX, SavedVY, SavedVZ, mass, SavedSteps 
 
-def plotfig(R, a, b, SavedCOM, SavedX, SavedY, SavedZ, SavedSteps, t):
+def plotfig(R, SavedCOM, SavedX, SavedY, SavedZ, SavedSteps, t):
     
-    #SavedCOM, SavedX, SavedY, SavedZ, SavedVX, SavedVY, SavedVZ, mass, SavedSteps = HugeFunc(T, t, a, b, v)
     fig = plt.figure(figsize=(10, 10))
     ax = fig.add_subplot(projection='3d')
     ax.set_box_aspect([1, 1, 1])
@@ -307,12 +341,12 @@ def plotfig(R, a, b, SavedCOM, SavedX, SavedY, SavedZ, SavedSteps, t):
     return ani, SavedX 
 
 
-def EnergyPlot(T, t, a, b, v, R, rho0, rs):
+def EnergyPlot(T, t, a, b, R, Mhalo, Rvir, c):
     #fig, axes = plt.subplots(2, 1, figsize=(9, 7))
     fig = plt.figure(figsize=(10, 10))
     ax = fig.add_subplot()
-    SavedCOM, SavedX, SavedY, SavedZ, Vx, Vy, Vz, mass, SavedSteps = HugeFunc(T, t, a, b, v, rho0, rs)
-    ani, _ = plotfig(R, a, b, SavedCOM, SavedX, SavedY, SavedZ, SavedSteps, t)
+    SavedCOM, SavedX, SavedY, SavedZ, Vx, Vy, Vz, mass, SavedSteps = HugeFunc(T, t, a, b, Mhalo, Rvir, c)
+    ani, _ = plotfig(R, SavedCOM, SavedX, SavedY, SavedZ, SavedSteps, t)
     ms = mass
     X = SavedX
     Y = SavedY
@@ -335,10 +369,12 @@ def EnergyPlot(T, t, a, b, v, R, rho0, rs):
         #dz = z[:,None] - z[None,:]
         #r = np.sqrt(dx**2 + dy**2 + dz**2 + e**2)
         Utot = 0
-        midX = 0.5 * (X[i] + X[i+1])
-        midY = 0.5 * (Y[i] + Y[i+1])
-        midZ = 0.5 * (Z[i] + Z[i+1])
-        positions = np.stack([midX, midY, midZ], axis=1)
+        #midX = 0.5 * (X[i] + X[i+1])
+        #midY = 0.5 * (Y[i] + Y[i+1])
+        #midZ = 0.5 * (Z[i] + Z[i+1])
+        
+        positions = np.stack([X[i], Y[i], Z[i]], axis=1)
+        #positions = np.stack([midX, midY, midZ], axis=1)
         d = positions[:,None,:] - positions[None,:,:]
         r = np.sqrt(np.sum(d*d,axis=2)+e**2)
         U = -G * (ms[:,None]*ms[None,:]) / r
@@ -348,9 +384,9 @@ def EnergyPlot(T, t, a, b, v, R, rho0, rs):
         
         
         Ktot = 0
-        vx = Vx[i+1]
-        vy = Vy[i+1]
-        vz = Vz[i+1]
+        vx = Vx[i]
+        vy = Vy[i]
+        vz = Vz[i]
         v2 = vx**2 + vy**2 + vz**2
         Ktot = 0.5 * np.sum(ms * v2)
         KEtotarr[i] = Ktot
@@ -378,32 +414,43 @@ def EnergyPlot(T, t, a, b, v, R, rho0, rs):
     return Utotarr, KEtotarr, Etot, ani, fig
 
 
-N = 300
-R = 5e19#100000
-M = 1e38
-e = 1e18#0.1*R
-Vmax = 1e4
-Rho0 = 1e-20
-rs = 1e19
+Msol = 1.989e+30
+Kpc = 3.086e+19
+Myr = 3600 * 24 * 365 * 1e6
 
-odt = 1e13#datetime.timedelta(days=1).total_seconds()
-T_orbit = 4e15*10
+N = 400
+Rstel = 2.6 * Kpc
+Rvir = 200 * Kpc
+Mstel = 5.04e10 * Msol
+Mhalo = 0 #0.97e12 * Msol
+e = 0.001 * Kpc
+Vmax = 1e4
+Rvir = 200 * Kpc
+c = 9.4
+
+odt = 0.01 * Myr
+T_orbit = 212 * Myr * 0.2
 oT = T_orbit
 oTotT = oT / odt
 print(odt)
 
-a,b = Posallocate(N, R, M)
+a,b = Posallocate(N, Rstel, Mstel)
+Xmatrix = a[:,0]
+Ymatrix = a[:,1]
+Zmatrix = a[:,2]
+
+
 #ani, SavedX = plotfig(oTotT,  odt, R, a, b)
-U, KE, E, ani, fig = EnergyPlot(oTotT, odt , a,b, Vmax, R, Rho0, rs)
+U, KE, E, ani, fig = EnergyPlot(oTotT, odt , a, b, Rstel, Mhalo, Rvir, c)
 #print(SavedX)
+#rhor = HaloAccel(Xmatrix, Ymatrix, Zmatrix, Mhalo, Rvir, c)
 
+# """
 
-"""
+# SHOW THE PLOT FROM ABOVE SINCE YOURE NOT EVEN SHOWING THE Z DIRECTION ANYWAY
+# ALSO REMEMBER TO CHANGE THE INITIAL VELS CALC IN THE BIG FUNC ANDDDD THE ACCEL CALC WHEN IM INCULDING THE HALO AND NOT
 
-SHOW THE PLOT FROM ABOVE SINCE YOURE NOT EVEN SHOWING THE Z DIRECTION ANYWAY
-ALSO REMEMBER TO CHANGE THE INITIAL VELS CALC IN THE BIG FUNC ANDDDD THE ACCEL CALC WHEN IM INCULDING THE HALO AND NOT
-
-"""
+# """
 
 
 
