@@ -547,3 +547,9 @@ runcell(0, 'C:/Users/adidu/.spyder-py3/Computing Project Core.py')
 %runcell -i 0 'C:/Users/adidu/.spyder-py3/Disk with varied vels.py'
 %runfile 'C:/Users/adidu/.spyder-py3/Disk with varied vels.py' --wdir
 %runcell -i 0 'C:/Users/adidu/.spyder-py3/Disk with varied vels.py'
+
+## ---(Fri Feb 13 11:41:04 2026)---
+%runcell -i 0 'C:/Users/adidu/.spyder-py3/Disk generator Code.py'
+
+## ---(Fri Feb 13 15:09:44 2026)---
+%runcell -i 0 'C:/Users/adidu/.spyder-py3/Disk generator Code.py'

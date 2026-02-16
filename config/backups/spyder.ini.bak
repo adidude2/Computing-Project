@@ -26,7 +26,7 @@ interface_language = en
 custom_cursor_blinking = 1060
 last_visible_toolbars = []
 prev_high_dpi_custom_scale_factors = 1
-last_inapp_appeal = 2026-01-29
+last_inapp_appeal = 2026-02-13
 spyder_runs_for_appeal = 26
 
 [update_manager]
@@ -561,12 +561,12 @@ font/size = 10
 font/italic = False
 font/bold = False
 app_font/family = MS Shell Dlg 2
-app_font/size = 12
+app_font/size = 8
 app_font/italic = False
 app_font/bold = False
 use_system_font = True
 monospace_app_font/family = Consolas
-monospace_app_font/size = 14
+monospace_app_font/size = 9
 monospace_app_font/italic = False
 monospace_app_font/bold = False
 ui_theme = automatic

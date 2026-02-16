@@ -74,7 +74,7 @@ def force_vectorised(arrx, arry, arrz, mass):
     dz = arrz[:, None] - arrz[None, :]
     m = mass
 
-    r2 = dx**2 + dy**2 + dz**2 + e**2
+    r2 = dx**2 + dy**2 + dz**2 + e**2 
     r3 = r2**1.5
 
     Fx = -G * (m[:, None] * m[None, :]) * dx / r3

@@ -23,21 +23,24 @@ import matplotlib.gridspec as gridspec
     
     
     
-def Posallocate(N, R):
+def Posallocate(N, R, M):
     u = np.random.rand(N)
     radius = R * np.sqrt(u)
     #Random Direction for vectors normalized
     phi = np.random.rand(N) * 2 * np.pi
     x = radius * np.cos(phi)
     y = radius * np.sin(phi)
-    z = np.random.normal(scale=0.01, size=N)
+    #z = np.random.normal(scale=0.01, size=N)
+    z= np.zeros(N)
     
     Points = np.column_stack((x,y,z))
     
-    masses =  np.full(N, 1000)# 1e25/N)
+    masses =  np.full(N, M/N)# 1e25/N)
     return Points, masses
 
-z,mass = Posallocate(100, 1)
+R = 5e19
+
+z,mass = Posallocate(500,5e19, 1e38)
 print(z)#,len(mass))
 print(len(z[:,0]),len(z[:,1]),len(z[:,2]))
 a = Xmatrix = z[:,0]
@@ -58,7 +61,7 @@ print(len(Zmatrix))
 fig = plt.figure(figsize=(10, 10))
 ax = fig.add_subplot(projection='3d')
 ax.set_box_aspect([1, 1, 1])
-L = 1
+L = 1 * R
 ax.set_xlim(-L, L)
 ax.set_ylim(-L, L)
 ax.set_zlim(-L, L)
@@ -66,7 +69,7 @@ ax.set_xticks([-L, 0, L])
 ax.set_yticks([-L, 0, L])
 ax.set_zticks([-L, 0, L])
 ax.view_init(elev=15, azim=45)
-ax.scatter(a,b,c, s=5)
+ax.scatter(a,b,c, s=3)
 scat = ax.scatter(a, b, c, s=5, color = 'tab:blue')
 
 def update(frame):
