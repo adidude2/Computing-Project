@@ -267,19 +267,19 @@ def HugeFunc(T, t, ass, mass, Mhalo, Rvir, c):
         dvx, dvy, dvz = AccelCalc(Xmatrix, Ymatrix, Zmatrix, mass, t, Mhalo, Rvir, c)
         
         
-        VXmatrix += dvx
-        VYmatrix += dvy
-        VZmatrix += dvz
+        VXmatrix += 0.5 * dvx
+        VYmatrix += 0.5 * dvy
+        VZmatrix += 0.5 * dvz
 
         Xmatrix += VXmatrix * t
         Ymatrix += VYmatrix * t
         Zmatrix += VZmatrix * t
         
-        #dvx, dvy, dvz = AccelCalc(Xmatrix, Ymatrix, Zmatrix, mass, t, Mhalo, Rvir, c)
+        dvx, dvy, dvz = AccelCalc(Xmatrix, Ymatrix, Zmatrix, mass, t, Mhalo, Rvir, c)
         
-        # VXmatrix += 0.5 * dvx
-        # VYmatrix += 0.5 * dvy
-        # VZmatrix += 0.5 * dvz
+        VXmatrix += 0.5 * dvx
+        VYmatrix += 0.5 * dvy
+        VZmatrix += 0.5 * dvz
         
     #print("v_dot_r:", VXmatrix*Xmatrix + VYmatrix*Ymatrix) 
     return SavedCOM, SavedX, SavedY, SavedZ, SavedVX, SavedVY, SavedVZ, mass, SavedSteps 
@@ -370,11 +370,11 @@ def EnergyPlot(T, t, a, b, R, Mhalo, Rvir, c):
         #dz = z[:,None] - z[None,:]
         #r = np.sqrt(dx**2 + dy**2 + dz**2 + e**2)
         Utot = 0
-        midX = 0.5 * (X[i] + X[i+1])
-        midY = 0.5 * (Y[i] + Y[i+1])
-        midZ = 0.5 * (Z[i] + Z[i+1])
+        # midX = 0.5 * (X[i] + X[i+1])
+        # midY = 0.5 * (Y[i] + Y[i+1])
+        # midZ = 0.5 * (Z[i] + Z[i+1])
         
-        positions = np.stack([midX, midY, midZ], axis=1)
+        positions = np.stack([X, Y, Z], axis=1)
         #positions = np.stack([midX, midY, midZ], axis=1)
         d = positions[:,None,:] - positions[None,:,:]
         r = np.sqrt(np.sum(d*d,axis=2)+e**2)
@@ -419,16 +419,16 @@ Msol = 1.989e+30
 Kpc = 3.086e+19
 Myr = 3600 * 24 * 365 * 1e6
 
-N = 400
+N = 300
 Rstel = 2.6 * Kpc
 Rvir = 200 * Kpc
 Mstel = 5.04e10 * Msol
-Mhalo = 0.97e12 * Msol
+Mhalo = 0 #0.97e12 * Msol
 e = 0.1 * Kpc # softening
 c = 9.4
 
 odt = 0.05 * Myr
-T_orbit = 212 * Myr * 1
+T_orbit = 212 * Myr
 oT = T_orbit
 oTotT = oT / odt
 print(odt)
