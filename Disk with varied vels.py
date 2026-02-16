@@ -199,7 +199,8 @@ def NonHaloVels(a, mass):
     a_sorted = a[sort_idx]
     r_sorted = np.sqrt(a_sorted[:,0]**2 + a_sorted[:,1]**2)
     r_safe = np.where(r_sorted == 0, 1e-10, r_sorted)
-    Menc = np.cumsum(mass)
+    m_sorted = mass[sort_idx]
+    Menc = np.cumsum(m_sorted)
     CircSpeed = np.sqrt(G * Menc / r_safe)
     
     anew = np.column_stack((-a_sorted[:,1], a_sorted[:,0]))
@@ -242,7 +243,6 @@ def HugeFunc(T, t, ass, mass, Mhalo, Rvir, c):
     VXmatrix = vel[:,0]
     VYmatrix = vel[:,1]
     VZmatrix = vel[:,2]
-    Radius = np.zeros(len(Xmatrix))
     SavedX = []
     SavedY = []
     SavedZ = []
@@ -264,16 +264,22 @@ def HugeFunc(T, t, ass, mass, Mhalo, Rvir, c):
             SavedSteps.append(i)
             
         dvx, dvy, dvz = AccelCalc(Xmatrix, Ymatrix, Zmatrix, mass, t, Mhalo, Rvir, c)
-        Radius = np.sqrt((Xmatrix - A)**2 + (Ymatrix - B)**2 + (Zmatrix - C)**2)
         
         
-        VXmatrix += dvx
-        VYmatrix += dvy
-        VZmatrix += dvz
+        VXmatrix += 0.5 * dvx
+        VYmatrix += 0.5 * dvy
+        VZmatrix += 0.5 * dvz
 
         Xmatrix += VXmatrix * t
         Ymatrix += VYmatrix * t
         Zmatrix += VZmatrix * t
+        
+        dvx, dvy, dvz = AccelCalc(Xmatrix, Ymatrix, Zmatrix, mass, t, Mhalo, Rvir, c)
+        
+        VXmatrix += 0.5 * dvx
+        VYmatrix += 0.5 * dvy
+        VZmatrix += 0.5 * dvz
+        
     #print("v_dot_r:", VXmatrix*Xmatrix + VYmatrix*Ymatrix) 
     return SavedCOM, SavedX, SavedY, SavedZ, SavedVX, SavedVY, SavedVZ, mass, SavedSteps 
 
@@ -363,10 +369,12 @@ def EnergyPlot(T, t, a, b, R, Mhalo, Rvir, c):
         #dz = z[:,None] - z[None,:]
         #r = np.sqrt(dx**2 + dy**2 + dz**2 + e**2)
         Utot = 0
-        midX = 0.5 * (X[i] + X[i+1])
-        midY = 0.5 * (Y[i] + Y[i+1])
-        midZ = 0.5 * (Z[i] + Z[i+1])
-        positions = np.stack([midX, midY, midZ], axis=1)
+        #midX = 0.5 * (X[i] + X[i+1])
+        #midY = 0.5 * (Y[i] + Y[i+1])
+        #midZ = 0.5 * (Z[i] + Z[i+1])
+        
+        positions = np.stack([X[i], Y[i], Z[i]], axis=1)
+        #positions = np.stack([midX, midY, midZ], axis=1)
         d = positions[:,None,:] - positions[None,:,:]
         r = np.sqrt(np.sum(d*d,axis=2)+e**2)
         U = -G * (ms[:,None]*ms[None,:]) / r
@@ -376,9 +384,9 @@ def EnergyPlot(T, t, a, b, R, Mhalo, Rvir, c):
         
         
         Ktot = 0
-        vx = Vx[i+1]
-        vy = Vy[i+1]
-        vz = Vz[i+1]
+        vx = Vx[i]
+        vy = Vy[i]
+        vz = Vz[i]
         v2 = vx**2 + vy**2 + vz**2
         Ktot = 0.5 * np.sum(ms * v2)
         KEtotarr[i] = Ktot
@@ -414,14 +422,14 @@ N = 400
 Rstel = 2.6 * Kpc
 Rvir = 200 * Kpc
 Mstel = 5.04e10 * Msol
-Mhalo = 0.97e12 * Msol
-e = 0.01 * Kpc
+Mhalo = 0 #0.97e12 * Msol
+e = 0.001 * Kpc
 Vmax = 1e4
 Rvir = 200 * Kpc
 c = 9.4
 
-odt = 0.1 * Myr
-T_orbit = 212 * Myr
+odt = 0.01 * Myr
+T_orbit = 212 * Myr * 0.2
 oT = T_orbit
 oTotT = oT / odt
 print(odt)
