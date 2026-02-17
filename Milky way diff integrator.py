@@ -427,7 +427,7 @@ Mhalo = 0 #0.97e12 * Msol
 e = 0.1 * Kpc # softening
 c = 9.4
 
-odt = 0.05 * Myr
+odt = 0.1 * Myr
 T_orbit = 212 * Myr
 oT = T_orbit
 oTotT = oT / odt

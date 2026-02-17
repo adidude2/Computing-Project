@@ -78,7 +78,7 @@ def HaloAccel(arrx, arry, arrz, Mhalo, Rvir, c):
     ax = amag * arrx / r_safe
     ay = amag * arry / r_safe
     az = amag * arrz / r_safe
-    return ax, ay, az, Menc
+    return ax, ay, az, Menc, Rs, rho0
 
     
 #a = HaloAccel(Xmatrix, Ymatrix, Zmatrix, 4, 2)
@@ -119,7 +119,7 @@ def AccelCalc(arrx,arry, arrz, mass, t, Mhalo, Rvir, c):
     az = Fz / m
     
     
-    hax, hay, haz, M = HaloAccel(
+    hax, hay, haz, M, Rs, rho0 = HaloAccel(
        arrx,
        arry,
        arrz,
@@ -136,7 +136,7 @@ def AccelCalc(arrx,arry, arrz, mass, t, Mhalo, Rvir, c):
     dvx = ax * t
     dvy = ay * t
     dvz = az * t
-    return dvx, dvy, dvz
+    return dvx, dvy, dvz, M
 
 #print(AccelCalc(Xmatrix, Ymatrix,odt))
 
@@ -226,7 +226,7 @@ def HugeFunc(T, t, ass, mass, Mhalo, Rvir, c):
     Ymatrix = a[:,1]
     Zmatrix = a[:,2]
     
-    hax, hay, haz, Menc = HaloAccel(
+    hax, hay, haz, Menc, Rs, rho0 = HaloAccel(
        Xmatrix,
        Ymatrix,
        Zmatrix,
@@ -235,7 +235,8 @@ def HugeFunc(T, t, ass, mass, Mhalo, Rvir, c):
        c
     )
     
-    
+    print("Original:", rho0)
+    print("Original:", Rs)
 
     
     vel = HaloVels(a, Menc, mass)
@@ -252,9 +253,10 @@ def HugeFunc(T, t, ass, mass, Mhalo, Rvir, c):
     SavedVZ = []
     SavedSteps = []
     SavedCOM = []
+    SavedMenc = []
     for i in range (0,int(T-1)):
         A,B,C = COMCalc(Xmatrix,Ymatrix, Zmatrix, mass)
-        if i % 1 == 0:
+        if i % 2 == 0:
             SavedCOM.append((A, B, C))
             SavedX.append(Xmatrix.copy())
             SavedY.append(Ymatrix.copy())
@@ -262,9 +264,10 @@ def HugeFunc(T, t, ass, mass, Mhalo, Rvir, c):
             SavedVX.append(VXmatrix.copy())
             SavedVY.append(VYmatrix.copy())
             SavedVZ.append(VZmatrix.copy())
+            SavedMenc.append(Menc.copy())
             SavedSteps.append(i)
             
-        dvx, dvy, dvz = AccelCalc(Xmatrix, Ymatrix, Zmatrix, mass, t, Mhalo, Rvir, c)
+        dvx, dvy, dvz, Menc = AccelCalc(Xmatrix, Ymatrix, Zmatrix, mass, t, Mhalo, Rvir, c)
         
         
         VXmatrix += dvx
@@ -282,7 +285,7 @@ def HugeFunc(T, t, ass, mass, Mhalo, Rvir, c):
         # VZmatrix += 0.5 * dvz
         
     #print("v_dot_r:", VXmatrix*Xmatrix + VYmatrix*Ymatrix) 
-    return SavedCOM, SavedX, SavedY, SavedZ, SavedVX, SavedVY, SavedVZ, mass, SavedSteps 
+    return SavedCOM, SavedX, SavedY, SavedZ, SavedVX, SavedVY, SavedVZ, mass, SavedSteps, Rs, rho0
 
 def plotfig(R, SavedCOM, SavedX, SavedY, SavedZ, SavedSteps, t):
     
@@ -346,7 +349,7 @@ def EnergyPlot(T, t, a, b, R, Mhalo, Rvir, c):
     #fig, axes = plt.subplots(2, 1, figsize=(9, 7))
     fig = plt.figure(figsize=(10, 10))
     ax = fig.add_subplot()
-    SavedCOM, SavedX, SavedY, SavedZ, Vx, Vy, Vz, mass, SavedSteps = HugeFunc(T, t, a, b, Mhalo, Rvir, c)
+    SavedCOM, SavedX, SavedY, SavedZ, Vx, Vy, Vz, mass, SavedSteps, Rs, rho0 = HugeFunc(T, t, a, b, Mhalo, Rvir, c)
     ani, _ = plotfig(R, SavedCOM, SavedX, SavedY, SavedZ, SavedSteps, t)
     ms = mass
     X = SavedX
@@ -361,9 +364,9 @@ def EnergyPlot(T, t, a, b, R, Mhalo, Rvir, c):
     KEtotarr = np.empty(len(X)-1)
     Virtotarr = np.empty(len(X)-1)
     for i in range (0,len(X)-1):
-        #x = X[i]
-        #y = Y[i]
-        #z = Z[i]
+        x = X[i]
+        y = Y[i]
+        z = Z[i]
         Utot = 0
         #dx = x[:,None] - x[None,:]
         #dy = y[:,None] - y[None,:]
@@ -380,7 +383,20 @@ def EnergyPlot(T, t, a, b, R, Mhalo, Rvir, c):
         r = np.sqrt(np.sum(d*d,axis=2)+e**2)
         U = -G * (ms[:,None]*ms[None,:]) / r
         np.fill_diagonal(U,0)
-        Utot = np.sum(U)/2
+        
+        r = np.sqrt(x**2 + y**2 + z**2)
+        r_safe = np.where(r==0, 1e-10, r)
+        
+        phihalo = (-4 * np.pi * G * rho0 * Rs**3 / r_safe) * np.log(
+            
+            1 + r_safe/Rs
+            
+            )
+        
+        Uhalo   = mass * phihalo
+        
+        
+        Utot = np.sum(U)/2 + np.sum(Uhalo)
         Utotarr[i] = Utot
         
         
@@ -409,8 +425,8 @@ def EnergyPlot(T, t, a, b, R, Mhalo, Rvir, c):
     ax.set_ylabel("Energy (J)")
     ax.legend()
     fig.savefig(r'C:\Users\adidu\Documents\Work stuff\Year 3\Computing Project\Old Python Files\Energy Deviation from meanNbody.png', transparent=True)
-    print(len(Utotarr))
-    print(len(KEtotarr))
+    print("New:", rho0)
+    print("New:", Rs)
     print((Etot - Etot[0]) / Etot[0])
     return Utotarr, KEtotarr, Etot, ani, fig
 
@@ -419,16 +435,16 @@ Msol = 1.989e+30
 Kpc = 3.086e+19
 Myr = 3600 * 24 * 365 * 1e6
 
-N = 400
-Rstel = 2.6 * Kpc
-Rvir = 200 * Kpc
-Mstel = 5.04e10 * Msol
-Mhalo = 0.97e12 * Msol
-e = 0.1 * Kpc # softening
-c = 9.4
+N     = 400               # Number of bodies
+Rstel = 2.6 * Kpc         # Stellar Disk radius
+Rvir  = 200 * Kpc         # Halo virial radius
+Mstel = 5.04e10 * Msol    # Total mass of Stars
+Mhalo = 0.97e12 * Msol    # Mass of Whole Halo
+e     = 0.1 * Kpc         # softening
+c     = 9.4               # concentration
 
-odt = 0.05 * Myr
-T_orbit = 212 * Myr * 1
+odt = 0.1 * Myr           # Timestep
+T_orbit = 212 * Myr * 2   # Simulation time
 oT = T_orbit
 oTotT = oT / odt
 print(odt)
