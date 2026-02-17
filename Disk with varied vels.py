@@ -395,20 +395,21 @@ def EnergyPlot(T, t, a, b, R, Mhalo, Rvir, c):
         r = np.sqrt(x**2 + y**2 + z**2)
         r_safe = np.where(r==0, 1e-10, r)
         
-        # phihalo = (-4 * np.pi * G * rho0 * Rs**3 / r_safe) * np.log(
+        phihalo = (-4 * np.pi * G * rho0 * Rs**3 / r_safe) * np.log(
             
-        #     1 + r_safe/Rs
+             1 + r_safe/Rs
             
-        #     )
+             )
         
-        # Uhalo   = mass * phihalo
+        Uhalo   = mass * phihalo
         
-        Uhalo = -G * mass * SavedMenc[i]/ r_safe
+        U_stellar = np.sum(U) / 2
         
-        
-        Utot = np.sum(U)/2 + np.sum(Uhalo)
+        Utot = U_stellar + np.sum(Uhalo)
         Utotarr[i] = Utot
         
+        hax, hay, haz, _, _, _ = HaloAccel(x, y, z, Mhalo, Rvir, c)
+        Omega_halo = np.sum(ms * (x * hax + y * hay + z * haz))
         
         Ktot = 0
         vx = Vx[i+1]
@@ -420,6 +421,8 @@ def EnergyPlot(T, t, a, b, R, Mhalo, Rvir, c):
         
         Vir = 0
         Vir = (2*Ktot + Utot)
+        # Vir = 2K + Omega_stellar + Omega_halo; for gravity Omega_stellar = U_stellar
+        Vir = 2 * Ktot + U_stellar + Omega_halo
         Virtotarr[i] = Vir
     Etot = Utotarr + KEtotarr
     Uavg = np.mean(Utotarr)
