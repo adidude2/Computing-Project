@@ -23,14 +23,30 @@ import matplotlib.gridspec as gridspec
     
     
     
+# def Posallocate(N, R, M):
+#     u = np.random.rand(N)
+#     radius = R * np.sqrt(u)
+#     #Random Direction for vectors normalized
+#     phi = np.random.rand(N) * 2 * np.pi
+#     x = radius * np.cos(phi)
+#     y = radius * np.sin(phi)
+#     #z = np.random.normal(scale=0.01, size=N)
+#     z= np.zeros(N)
+    
+#     Points = np.column_stack((x,y,z))
+    
+#     masses =  np.full(N, M/N)# 1e25/N)
+#     return Points, masses
+
 def Posallocate(N, R, M):
-    u = np.random.rand(N)
-    radius = R * np.sqrt(u)
+    Rd = R/3
+    u1 = np.random.rand(N)
+    u2 = np.random.rand(N)
+    radius = -Rd * np.log(u1 * u2)
     #Random Direction for vectors normalized
     phi = np.random.rand(N) * 2 * np.pi
     x = radius * np.cos(phi)
     y = radius * np.sin(phi)
-    #z = np.random.normal(scale=0.01, size=N)
     z= np.zeros(N)
     
     Points = np.column_stack((x,y,z))
@@ -40,7 +56,7 @@ def Posallocate(N, R, M):
 
 R = 5e19
 
-z,mass = Posallocate(500,5e19, 1e38)
+z,mass = Posallocate(1000,5e19, 1e38)
 print(z)#,len(mass))
 print(len(z[:,0]),len(z[:,1]),len(z[:,2]))
 a = Xmatrix = z[:,0]
@@ -73,7 +89,7 @@ ax.scatter(a,b,c, s=3)
 scat = ax.scatter(a, b, c, s=5, color = 'tab:blue')
 
 def update(frame):
-    ax.view_init(elev=15, azim=frame)
+    ax.view_init(elev=90, azim=frame)
     return scat,
 
 # Animation
