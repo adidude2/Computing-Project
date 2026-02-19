@@ -24,11 +24,17 @@ G=6.6726e-11 #N-m2/kg2
 "ATTENTION ARRAYS GO ([ROW,COLUMN])"
 
 
-def Posallocate(N, R, M, z0):
-    Rd = R/3
-    u1 = np.random.rand(N)
-    u2 = np.random.rand(N)
-    radius = -Rd * np.log(u1 * u2)
+def Posallocate(N, Rd, Rmax, M, z0):
+    radius = []
+
+    while len(radius) < N:
+        u1 = np.random.rand(N)
+        u2 = np.random.rand(N)
+        candidate = -Rd * np.log(u1 * u2)
+        valid = candidate[candidate < Rmax]
+        radius.extend(valid)
+
+    radius = np.array(radius[:N])
     #Random Direction for vectors normalized
     phi = np.random.rand(N) * 2 * np.pi
     x = radius * np.cos(phi)
@@ -190,7 +196,7 @@ def HaloVels(a, Menc, mass):
     unsort_idx = np.argsort(sort_idx)
     return vels_sorted[unsort_idx]
 
-def BetterHaloVels(a, t, dvx, dvy, dvz, mass, f):
+def BetterHaloVels(a, t, dvx, dvy, dvz, mass, f, fz):
     X = a[:,0]
     Y = a[:,1]
     Z = a[:,2]
@@ -201,10 +207,10 @@ def BetterHaloVels(a, t, dvx, dvy, dvz, mass, f):
     ay = dvy / t
     az = dvz / t
     
-    r = np.sqrt(X**2 + Y**2 + Z**2)
+    r = np.sqrt(X**2 + Y**2)
 
 
-    ar = (ax * X + ay * Y + az * Z ) / r
+    ar = (ax * X + ay * Y) / r
     
     vtrue2 = r * (-ar)
     vtrue2 = np.where(vtrue2 > 0, vtrue2, 0.0)
@@ -214,18 +220,20 @@ def BetterHaloVels(a, t, dvx, dvy, dvz, mass, f):
     
     vrad = np.random.normal(0, f * vtan)
     
+    vz = np.random.normal(0, fz * vtan)
+    
     anew = np.column_stack((-Y,X))
     norms = np.linalg.norm(anew, axis=1)
     Vhat = anew / norms[:, None]
     
     velsxy = vtan[:, None] * Vhat + vrad[:, None] * Rhat
-    vels = np.column_stack((velsxy,np.zeros(L)))
+    vels = np.column_stack((velsxy,vz))
     
     return vels
 
 
 
-def HugeFunc(T, t, ass, mass, Mhalo, Rvir, c, f):
+def HugeFunc(T, t, ass, mass, Mhalo, Rvir, c, f, fz):
     a = ass
     Xmatrix = a[:,0]
     Ymatrix = a[:,1]
@@ -249,14 +257,11 @@ def HugeFunc(T, t, ass, mass, Mhalo, Rvir, c, f):
         Mhalo, 
         Rvir, 
         c)
-    
-    print("Original:", rho0)
-    print("Original:", Rs)
 
     
     #vel = HaloVels(a, Menc, mass)
-    vel = BetterHaloVels(a, t, dvx, dvy, dvz, mass, f)
-    vel = 1.05 * vel
+    vel = BetterHaloVels(a, t, dvx, dvy, dvz, mass, f, fz)
+    vel = vel
     
     
     VXmatrix = vel[:,0]
@@ -273,7 +278,7 @@ def HugeFunc(T, t, ass, mass, Mhalo, Rvir, c, f):
     SavedMenc = []
     for i in range (0,int(T-1)):
         A,B,C = COMCalc(Xmatrix,Ymatrix, Zmatrix, mass)
-        if i % 1 == 0:
+        if i % 10 == 0:
             SavedCOM.append((A, B, C))
             SavedX.append(Xmatrix.copy())
             SavedY.append(Ymatrix.copy())
@@ -309,7 +314,7 @@ def HugeFunc(T, t, ass, mass, Mhalo, Rvir, c, f):
         VZmatrix += 0.5 * (dvz + dvz_new)
     return SavedCOM, SavedX, SavedY, SavedZ, SavedVX, SavedVY, SavedVZ, mass, SavedSteps, Rs, rho0, SavedMenc
 
-def plotfig(R, SavedCOM, SavedX, SavedY, SavedZ, SavedSteps, t):
+def plotfig(R, SavedCOM, SavedX, SavedY, SavedZ, SavedSteps, t, view, filename):
     
     fig = plt.figure(figsize=(10, 10))
     ax = fig.add_subplot(projection='3d')
@@ -330,26 +335,36 @@ def plotfig(R, SavedCOM, SavedX, SavedY, SavedZ, SavedSteps, t):
         Y = SavedY[frame]
         Z = SavedZ[frame]
         
-        L = 2 * R
+        Kpc = 3.086e+19
+        
+        L = 1 * R / Kpc
         ax.set_xlim(-L, L)
         ax.set_ylim(-L, L)
         ax.set_zlim(-L, L)
         ax.set_xticks([-L, 0, L])
         ax.set_yticks([-L, 0, L])
         ax.set_zticks([-L, 0, L])
+        ax.set_xlabel("X (kpc)")
+        ax.set_ylabel("Y (kpc)")
+        ax.set_zlabel("Z (kpc)")
         #ax.set_xticks([])
         #ax.set_yticks([])
         #ax.set_zticks([])
         #ax.set_axis_off()
-
+        
 
         ax.scatter(
-            X,
-            Y,
-            Z,
+            X / Kpc,
+            Y / Kpc,
+            Z / Kpc,
             s=2
         )
-        ax.view_init(elev=90, azim=90)#+frame)  # elev is fixed, azim changes each frame
+        if view == "face":
+            ax.view_init(elev=90, azim=90)
+        elif view == "edge":
+            ax.view_init(elev=0, azim=90)
+        elif view == "inclined":
+            ax.view_init(elev=30, azim=45)
         time_gyr = (SavedSteps[frame] * t) / (1e6 * 3600*24*365)
         ax.set_title(f"Time (Myr) = {time_gyr:.3f}")
     
@@ -360,19 +375,30 @@ def plotfig(R, SavedCOM, SavedX, SavedY, SavedZ, SavedSteps, t):
         interval=20  # ms between frames
         )
     
-    ani.save(r"C:\Users\adidu\Documents\Work stuff\Year 3\Computing Project\Old Python Files\nbody COM new.mp4", fps=60)
+    
+    ani.save(r"C:\Users\adidu\Documents\Work stuff\Year 3\Computing Project\Old Python Files\\"
+             + filename, fps=30)
+
 
     plt.show()
     
-    return ani, SavedX 
+    return ani
 
 
-def EnergyPlot(T, t, a, b, R, Mhalo, Rvir, c, f):
+def EnergyPlot(T, t, a, b, R, Mhalo, Rvir, c, f, fz):
     #fig, axes = plt.subplots(2, 1, figsize=(9, 7))
     fig = plt.figure(figsize=(10, 10))
     ax = fig.add_subplot()
-    SavedCOM, SavedX, SavedY, SavedZ, Vx, Vy, Vz, mass, SavedSteps, Rs, rho0, SavedMenc = HugeFunc(T, t, a, b, Mhalo, Rvir, c, f)
-    ani, _ = plotfig(R, SavedCOM, SavedX, SavedY, SavedZ, SavedSteps, t)
+    SavedCOM, SavedX, SavedY, SavedZ, Vx, Vy, Vz, mass, SavedSteps, Rs, rho0, SavedMenc = HugeFunc(T, t, a, b, Mhalo, Rvir, c, f, fz)
+    ani_face = plotfig(R, SavedCOM, SavedX, SavedY, SavedZ, SavedSteps, t,
+                     view = "face",
+                     filename="disk_faceon.mp4")
+    ani_edge = plotfig(R, SavedCOM, SavedX, SavedY, SavedZ, SavedSteps, t,
+                     view = "edge",
+                     filename="disk_edgeon.mp4")
+    ani_inclined = plotfig(R, SavedCOM, SavedX, SavedY, SavedZ, SavedSteps, t,
+                     view = "inclined",
+                     filename="disk_incline.mp4")
     ms = mass
     X = SavedX
     Y = SavedY
@@ -442,6 +468,23 @@ def EnergyPlot(T, t, a, b, R, Mhalo, Rvir, c, f):
     Uavg = np.mean(Utotarr)
     Kavg = np.mean(KEtotarr)
     Tavg = np.mean(Etot)
+    Vavg = np.mean(Virtotarr)
+    
+    E0   = Etot[0]
+    Vir0 = Virtotarr[0]
+    
+    de   = 100 * (Etot - E0) / E0
+    
+    max_de  = np.max(np.abs(de))
+    mean_de = np.mean(np.abs(de))
+    
+    
+    
+    vir_ratio = np.abs(Virtotarr) / np.abs(Utotarr)
+
+    max_dvir  = 100 * np.max(vir_ratio)
+    mean_dvir = 100 * np.mean(vir_ratio)
+    
     seconds_per_year = 1e6 * 3600 * 24 * 365
     x = (np.array(SavedSteps[:-1]) * t) / seconds_per_year
     ax.plot(x, Utotarr, label = 'Potential Energy', color = 'tab:red')
@@ -452,41 +495,55 @@ def EnergyPlot(T, t, a, b, R, Mhalo, Rvir, c, f):
     ax.set_ylabel("Energy (J)")
     ax.legend()
     fig.savefig(r'C:\Users\adidu\Documents\Work stuff\Year 3\Computing Project\Old Python Files\Energy Deviation from meanNbody.png', transparent=True)
-    return Utotarr, KEtotarr, Etot, ani, fig
+    return Uavg, Kavg, Tavg, vir_ratio, max_de, max_dvir, mean_de, mean_dvir, ani_face, ani_edge, fig
 
 
-Msol = 1.989e+30
-Kpc = 3.086e+19
-Myr = 3600 * 24 * 365 * 1e6
+Msol            = 1.989e+30
+Kpc             = 3.086e+19
+Myr             = 3600 * 24 * 365 * 1e6
 
-N     = 1000              # Number of bodies
-Rstel = 26.8 * Kpc         # Stellar Disk radius
-z0    = 1.35 * Kpc
-Rvir  = 200 * Kpc         # Halo virial radius
-Mstel = 5.04e10 * Msol    # Total mass of Stars
-Mhalo = 0.97e12 * Msol    # Mass of Whole Halo
+N               = 2000              # Number of bodies
+Rd              = 1.3 * 2.15 * Kpc  # Scale length
+Rmax            = 5 * Rd            # Truncation Radius
+z0              = 0.3 * Kpc         # Thickness of the disk
+Rvir            = 200 * Kpc         # Halo virial radius
+Mstel           = 5.04e10 * Msol    # Total mass of Stars
+Mhalo           = 0.97e12 * Msol    # Mass of Whole Halo
 
-Mhalonew = Mhalo
-Mstelnew = Mstel
+Mhalo_effective = 1.5 * Mhalo       # Effective halo mass in simulation
+Mstel_effective = 0.9 * Mstel       # Effective stellar mass in simulation
 
-e     = 0.2 * Kpc         # softening
-c     = 9.4               # concentration
-f     = 0.1            # radial velocity dispersion
+e               = 0.3 * Kpc         # softening
+c               = 9.4               # halo concentration
+sigma_R_factor  = 0.18              # radial velocity dispersion
+sigma_z_factor  = 0.1               # vertical velocity dispersion
 
-odt = 0.1 * Myr           # Timestep
-T_orbit = 212 * Myr   # Simulation time
+
+odt = 0.1 * Myr                     # Timestep
+T_orbit = 212 * Myr * 3             # Simulation time
+
 oT = T_orbit
 oTotT = oT / odt
 print(oTotT)
 
-a,b = Posallocate(N, Rstel, Mstelnew, z0)
+a,b = Posallocate(N, Rd, Rmax, Mstelnew, z0)
 X = a[:,0]
 Y = a[:,1]
 Z = a[:,2]
 
 
 #ani, SavedX = plotfig(oTotT,  odt, R, a, b)
-U, KE, E, ani, fig = EnergyPlot(oTotT, odt , a, b, Rstel, Mhalonew, Rvir, c, f)
+U, KE, E, Vir, max_de, max_dvir, mean_de, mean_dvir, ani_face, ani_edge, fig = EnergyPlot(oTotT, odt , a, b, Rmax, Mhalo_effective, Rvir, c, f, fz)
+
+print("Mean Kinetic:", KE)
+print("Mean Potential:", U)
+print("Mean Total:", E)
+print("Mean Virial:", Vir)
+print("Max Energy Percentage Difference:", max_de)
+print("Max Virial Percentage Difference:", max_dvir)
+print("Mean Energy Percentage Difference:", mean_de)
+print("Mean Virial Percentage Difference:", mean_dvir)
+
 #print(SavedX)
 #rhor = HaloAccel(Xmatrix, Ymatrix, Zmatrix, Mhalo, Rvir, c)
 

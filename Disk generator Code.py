@@ -38,25 +38,44 @@ import matplotlib.gridspec as gridspec
 #     masses =  np.full(N, M/N)# 1e25/N)
 #     return Points, masses
 
-def Posallocate(N, R, M):
-    Rd = R/3
-    u1 = np.random.rand(N)
-    u2 = np.random.rand(N)
-    radius = -Rd * np.log(u1 * u2)
+def Posallocate(N, Rd, Rmax, M, z0):
+    radius = []
+
+    while len(radius) < N:
+        u1 = np.random.rand(N)
+        u2 = np.random.rand(N)
+        candidate = -Rd * np.log(u1 * u2)
+        valid = candidate[candidate < Rmax]
+        radius.extend(valid)
+
+    radius = np.array(radius[:N])
     #Random Direction for vectors normalized
     phi = np.random.rand(N) * 2 * np.pi
     x = radius * np.cos(phi)
     y = radius * np.sin(phi)
-    z= np.zeros(N)
+    #z= np.zeros(N)
+    z = np.random.normal(0, z0, N)
+    
     
     Points = np.column_stack((x,y,z))
     
     masses =  np.full(N, M/N)# 1e25/N)
     return Points, masses
 
-R = 5e19
+Kpc = 3.086e+19
+Msol = 1.989e+30
 
-z,mass = Posallocate(1000,5e19, 1e38)
+
+Mstel = 5.04e10 * Msol
+Rstel = 26.8 * Kpc
+
+
+Rd    = 3 * 2.15 * Kpc
+Rmax  = Rstel #5 * Rd
+z0    = 0.3 * Kpc
+
+z,mass = Posallocate(1000, Rd, Rmax, Mstel, z0)
+# z,mass = Posallocate(1000, Rstel , Mstel)
 print(z)#,len(mass))
 print(len(z[:,0]),len(z[:,1]),len(z[:,2]))
 a = Xmatrix = z[:,0]
@@ -77,7 +96,7 @@ print(len(Zmatrix))
 fig = plt.figure(figsize=(10, 10))
 ax = fig.add_subplot(projection='3d')
 ax.set_box_aspect([1, 1, 1])
-L = 1 * R
+L = 1 * Rstel
 ax.set_xlim(-L, L)
 ax.set_ylim(-L, L)
 ax.set_zlim(-L, L)
@@ -89,7 +108,7 @@ ax.scatter(a,b,c, s=3)
 scat = ax.scatter(a, b, c, s=5, color = 'tab:blue')
 
 def update(frame):
-    ax.view_init(elev=90, azim=frame)
+    ax.view_init(elev=15, azim=frame)
     return scat,
 
 # Animation
