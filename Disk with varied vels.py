@@ -387,7 +387,7 @@ def plotfig(R, SavedCOM, SavedX, SavedY, SavedZ, SavedSteps, t, view, filename):
 
 def EnergyPlot(T, t, a, b, R, Mhalo, Rvir, c, f, fz):
     #fig, axes = plt.subplots(2, 1, figsize=(9, 7))
-    fig = plt.figure(figsize=(10, 10))
+    fig = plt.figure(figsize=(7, 5))
     ax = fig.add_subplot()
     SavedCOM, SavedX, SavedY, SavedZ, Vx, Vy, Vz, mass, SavedSteps, Rs, rho0, SavedMenc = HugeFunc(T, t, a, b, Mhalo, Rvir, c, f, fz)
     ani_face = plotfig(R, SavedCOM, SavedX, SavedY, SavedZ, SavedSteps, t,
@@ -396,9 +396,9 @@ def EnergyPlot(T, t, a, b, R, Mhalo, Rvir, c, f, fz):
     ani_edge = plotfig(R, SavedCOM, SavedX, SavedY, SavedZ, SavedSteps, t,
                      view = "edge",
                      filename="disk_edgeon.mp4")
-    ani_inclined = plotfig(R, SavedCOM, SavedX, SavedY, SavedZ, SavedSteps, t,
-                     view = "inclined",
-                     filename="disk_incline.mp4")
+    #ani_inclined = plotfig(R, SavedCOM, SavedX, SavedY, SavedZ, SavedSteps, t,
+    #                 view = "inclined",
+    #                 filename="disk_incline.mp4")
     ms = mass
     X = SavedX
     Y = SavedY
@@ -497,12 +497,136 @@ def EnergyPlot(T, t, a, b, R, Mhalo, Rvir, c, f, fz):
     fig.savefig(r'C:\Users\adidu\Documents\Work stuff\Year 3\Computing Project\Old Python Files\Energy Deviation from meanNbody.png', transparent=True)
     return Uavg, Kavg, Tavg, vir_ratio, max_de, max_dvir, mean_de, mean_dvir, ani_face, ani_edge, fig
 
+def EnergyPlotfrac(T, t, a, b, R, Mhalo, Rvir, c, f, fz):
+    fig, axes = plt.subplots(2, 1, figsize=(9, 7))
+    #fig = plt.figure(figsize=(7, 5))
+    #ax = fig.add_subplot()
+    SavedCOM, SavedX, SavedY, SavedZ, Vx, Vy, Vz, mass, SavedSteps, Rs, rho0, SavedMenc = HugeFunc(T, t, a, b, Mhalo, Rvir, c, f, fz)
+    ani_face = plotfig(R, SavedCOM, SavedX, SavedY, SavedZ, SavedSteps, t,
+                     view = "face",
+                     filename="disk_faceon.mp4")
+    ani_edge = plotfig(R, SavedCOM, SavedX, SavedY, SavedZ, SavedSteps, t,
+                     view = "edge",
+                     filename="disk_edgeon.mp4")
+    #ani_inclined = plotfig(R, SavedCOM, SavedX, SavedY, SavedZ, SavedSteps, t,
+    #                 view = "inclined",
+    #                 filename="disk_incline.mp4")
+    ms = mass
+    X = SavedX
+    Y = SavedY
+    Z = SavedZ
+    Np = len(X[0])
+    halfposX = np.empty(Np)
+    halfposY = np.empty(Np)
+    halfposZ = np.empty(Np)
+    #Uarr = np.empty(N*(N-1)/2)
+    Utotarr = np.empty(len(X)-1)
+    KEtotarr = np.empty(len(X)-1)
+    Virtotarr = np.empty(len(X)-1)
+    for i in range (0,len(X)-1):
+        x = X[i]
+        y = Y[i]
+        z = Z[i]
+        Utot = 0
+        #dx = x[:,None] - x[None,:]
+        #dy = y[:,None] - y[None,:]
+        #dz = z[:,None] - z[None,:]
+        #r = np.sqrt(dx**2 + dy**2 + dz**2 + e**2)
+        Utot = 0
+        midX = 0.5 * (X[i] + X[i+1])
+        midY = 0.5 * (Y[i] + Y[i+1])
+        midZ = 0.5 * (Z[i] + Z[i+1])
+        
+        positions = np.stack([midX, midY, midZ], axis=1)
+        #positions = np.stack([midX, midY, midZ], axis=1)
+        d = positions[:,None,:] - positions[None,:,:]
+        r = np.sqrt(np.sum(d*d,axis=2)+e**2)
+        U = -G * (ms[:,None]*ms[None,:]) / r
+        np.fill_diagonal(U,0)
+        
+        r = np.sqrt(x**2 + y**2 + z**2)
+        r_safe = np.where(r==0, 1e-10, r)
+        
+        phihalo = (-4 * np.pi * G * rho0 * Rs**3 / r_safe) * np.log(
+            
+             1 + r_safe/Rs
+            
+             )
+        
+        Uhalo   = mass * phihalo
+        
+        U_stellar = np.sum(U) / 2
+        
+        Utot = U_stellar + np.sum(Uhalo)
+        Utotarr[i] = Utot
+        
+        hax, hay, haz, _, _, _ = HaloAccel(x, y, z, Mhalo, Rvir, c)
+        Omega_halo = np.sum(ms * (x * hax + y * hay + z * haz))
+        
+        Ktot = 0
+        vx = Vx[i+1]
+        vy = Vy[i+1]
+        vz = Vz[i+1]
+        v2 = vx**2 + vy**2 + vz**2
+        Ktot = 0.5 * np.sum(ms * v2)
+        KEtotarr[i] = Ktot
+        
+        Vir = 0
+        Vir = (2*Ktot + Utot)
+        # Vir = 2K + Omega_stellar + Omega_halo; for gravity Omega_stellar = U_stellar
+        Vir = 2 * Ktot + U_stellar + Omega_halo
+        Virtotarr[i] = Vir
+    Etot = Utotarr + KEtotarr
+    Uavg = np.mean(Utotarr)
+    Kavg = np.mean(KEtotarr)
+    Tavg = np.mean(Etot)
+    Vavg = np.mean(Virtotarr)
+    du = np.empty(len(Utotarr))
+    dk = np.empty(len(Utotarr))
+    dTot = np.empty(len(Utotarr))
+    for i in range (0, len(Utotarr)):
+        du[i] = (Utotarr[i] - Utotarr[0])/abs(Utotarr[0])
+        dk[i] = (KEtotarr[i] - KEtotarr[0])/abs(KEtotarr[0])
+        dTot[i] = (Etot[i] - Etot[0])/abs(Etot[0])
+        
+        
+    E0   = Etot[0]
+    Vir0 = Virtotarr[0]
+    
+    de   = 100 * (Etot - E0) / E0
+    
+    max_de  = np.max(np.abs(de))
+    mean_de = np.mean(np.abs(de))
+    
+    
+    
+    vir_ratio = np.abs(Virtotarr) / np.abs(Utotarr)
+
+    max_dvir  = 100 * np.max(vir_ratio)
+    mean_dvir = 100 * np.mean(vir_ratio)
+    
+    seconds_per_year = 1e6 * 3600 * 24 * 365
+    x = (np.array(SavedSteps[:-1]) * t) / seconds_per_year
+    axes[0].plot(x, Utotarr, label = 'Potential Energy', color = 'tab:red')
+    axes[0].plot(x, KEtotarr, label = 'Kinetic Energy', color = 'tab:purple')
+    axes[0].plot(x, Etot, label = 'Total Energy', color = 'tab:gray')
+    axes[1].plot(x,du, label = r'$\Delta E_{pot}$', color = 'green')
+    axes[1].plot(x,dk, label = r'$\Delta E_{kin}$', color = 'orange')
+    axes[1].plot(x,dTot, label = r'$\Delta E_{tot}$', color = 'purple')
+    axes[0].plot(x, Virtotarr, label = 'Virial Energy', color = 'tab:blue')
+    axes[0].set_xlabel("Time (Myrs)")
+    axes[0].set_ylabel("Energy (J)")
+    axes[0].legend()
+    axes[1].legend()
+    fig.savefig(r'C:\Users\adidu\Documents\Work stuff\Year 3\Computing Project\Old Python Files\Energy Deviation from meanNbody.png', transparent=True)
+    return Uavg, Kavg, Tavg, vir_ratio, max_de, max_dvir, mean_de, mean_dvir, ani_face, ani_edge, fig
+
 
 Msol            = 1.989e+30
 Kpc             = 3.086e+19
 Myr             = 3600 * 24 * 365 * 1e6
 
-N               = 2000              # Number of bodies
+N               = 1000              # Number of bodies
 Rd              = 1.3 * 2.15 * Kpc  # Scale length
 Rmax            = 5 * Rd            # Truncation Radius
 z0              = 0.3 * Kpc         # Thickness of the disk
@@ -520,20 +644,20 @@ sigma_z_factor  = 0.1               # vertical velocity dispersion
 
 
 odt = 0.1 * Myr                     # Timestep
-T_orbit = 212 * Myr * 3             # Simulation time
+T_orbit = 212 * Myr * 1             # Simulation time
 
 oT = T_orbit
 oTotT = oT / odt
 print(oTotT)
 
-a,b = Posallocate(N, Rd, Rmax, Mstelnew, z0)
+a,b = Posallocate(N, Rd, Rmax, Mstel_effective, z0)
 X = a[:,0]
 Y = a[:,1]
 Z = a[:,2]
 
 
 #ani, SavedX = plotfig(oTotT,  odt, R, a, b)
-U, KE, E, Vir, max_de, max_dvir, mean_de, mean_dvir, ani_face, ani_edge, fig = EnergyPlot(oTotT, odt , a, b, Rmax, Mhalo_effective, Rvir, c, f, fz)
+U, KE, E, Vir, max_de, max_dvir, mean_de, mean_dvir, ani_face, ani_edge, fig = EnergyPlotfrac(oTotT, odt , a, b, Rmax, Mhalo_effective, Rvir, c, sigma_R_factor, sigma_z_factor)
 
 print("Mean Kinetic:", KE)
 print("Mean Potential:", U)
