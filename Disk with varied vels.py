@@ -237,9 +237,7 @@ def HugeFunc(T, t, ass, mass, Mhalo, Rvir, c, f, fz):
 
     
     #vel = HaloVels(a, Menc, mass)
-    vel = BetterHaloVels(a, t, dvx, dvy, dvz, mass, f, fz)
-    vel = vel
-    
+    vel = BetterHaloVels(a, t, dvx, dvy, dvz, mass, f, fz)   
     
     VXmatrix = vel[:,0]
     VYmatrix = vel[:,1]
@@ -496,27 +494,32 @@ def EnergyPlotfrac(t, R, Mhalo, Rvir, c, SavedCOM, SavedX, SavedY, SavedZ, Vx, V
     fig.savefig(r'C:\Users\adidu\Documents\Work stuff\Year 3\Computing Project\Old Python Files\Energy Deviation from meanNbody.png', transparent=True)
     return Uavg, Kavg, Tavg, max_du, max_dk, max_de, max_dvir, max_dlz, ani_face, ani_edge, fig
 
-def Toomre(X, Y, Vx, Vy):
-    x = X[0]
-    y = Y[0]
+def Toomre(X, Y, Vx, Vy, Rmax, mass):
+    x = X
+    y = Y
     vx = Vx[0]
     vy = Vy[0]
     R = np.sqrt(x**2 + y**2)
-    phi = np.arctan2(Y[0], X[0])
+    #phi = np.arctan2(Y[0], X[0])
     
     Vr = (x*vx + y*vy)/R
     vphi = (x*vy - y*vx)/R
     
     
-    nbins = 40
+    nbins = 15
     R_bins = np.linspace(0, Rmax, nbins+1)
     R_centers = 0.5*(R_bins[:-1] + R_bins[1:])
     
     Sigma = np.zeros(nbins)
     
     for i in range(nbins):
-        mask = (R >= R_bins[i]) & (R < R_bins[i+1])
-        Mbin = np.sum(mass[mask])
+        Mbin = np.sum(mass[
+            
+            (R >= R_bins[i])
+            & 
+            (R < R_bins[i+1])
+            
+            ])
         area = np.pi * (R_bins[i+1]**2 - R_bins[i]**2)
         
         Sigma[i] = Mbin / area
@@ -549,9 +552,11 @@ def Toomre(X, Y, Vx, Vy):
     Q = sigma_R * kappa / (3.36 * G * Sigma)
     
     plt.figure(figsize=(7, 5))
-    plt.plot(R_centers, Q)
+    plt.plot(R_centers/Kpc, Q)
     plt.axhline(1, linestyle='--')
     plt.axhline(2, linestyle=':')
+    plt.xlabel('Radius (Kpc)')
+    plt.ylabel('Toomre Q parameter')
     
     
     
@@ -559,7 +564,7 @@ Msol            = 1.989e+30
 Kpc             = 3.086e+19
 Myr             = 3600 * 24 * 365 * 1e6
 
-N               = 1500              # Number of bodies
+N               = 2000              # Number of bodies
 Rd              = 1.3 * 2.15 * Kpc  # Scale length
 Rmax            = 5 * Rd            # Truncation Radius
 z0              = 0.3 * Kpc         # Thickness of the disk
@@ -572,12 +577,12 @@ Mstel_effective = 0.9 * Mstel       # Effective stellar mass in simulation
 
 e               = 0.3 * Kpc         # softening
 c               = 9.4               # halo concentration
-sigma_R_factor  = 0.18              # radial velocity dispersion
+sigma_R_factor  = 0.6              # radial velocity dispersion
 sigma_z_factor  = 0.1               # vertical velocity dispersion
 
 
 odt = 0.1 * Myr                     # Timestep
-T_orbit = 212 * Myr * 0.1             # Simulation time
+T_orbit = 212 * Myr * 0.05             # Simulation time
 
 oT = T_orbit
 oTotT = oT / odt
@@ -604,43 +609,42 @@ SavedCOM, SavedX, SavedY, SavedZ, Vx, Vy, Vz, mass, SavedSteps, Rs, rho0 = HugeF
     
     )
 
-Uavg, Kavg, Tavg, max_du, max_dk, max_de, max_dvir, max_dlz, ani_face, ani_edge, fig = EnergyPlotfrac(
+# Uavg, Kavg, Tavg, max_du, max_dk, max_de, max_dvir, max_dlz, ani_face, ani_edge, fig = EnergyPlotfrac(
      
-    odt,
-    Rmax,
-    Mhalo_effective,
-    Rvir,
-    c,
-    SavedCOM,
-    SavedX,
-    SavedY,
-    SavedZ,
-    Vx,
-    Vy,
-    Vz,
-    mass,
-    SavedSteps,
-    Rs,
-    rho0
+#     odt,
+#     Rmax,
+#     Mhalo_effective,
+#     Rvir,
+#     c,
+#     SavedCOM,
+#     SavedX,
+#     SavedY,
+#     SavedZ,
+#     Vx,
+#     Vy,
+#     Vz,
+#     mass,
+#     SavedSteps,
+#     Rs,
+#     rho0
     
-    )
+#     )
 
-print("Mean Kinetic:", Kavg)
-print("Mean Potential:", Uavg)
-print("Mean Total:", Tavg)
-print("Max Energy Fractional Difference:", max_de)
-print("Max Kinetic Fractional Difference:", max_dk)
-print("Max Potential Fractional Difference:", max_du)
-print("Max Virial Residue:", max_dvir)
-print("Max Angular Momentum Fractional Difference:", max_dlz)
-#print("Mean Energy Percentage Difference:", mean_de)
-#print("Mean Virial Percentage Difference:", mean_dvir)
+#print("Mean Kinetic:", Kavg)
+#print("Mean Potential:", Uavg)
+#print("Mean Total:", Tavg)
+#print("Max Energy Fractional Difference:", max_de)
+#print("Max Kinetic Fractional Difference:", max_dk)
+#print("Max Potential Fractional Difference:", max_du)
+#print("Max Virial Residue:", max_dvir)
+#print("Max Angular Momentum Fractional Difference:", max_dlz)
+
 
 #print(SavedX)
 #rhor = HaloAccel(Xmatrix, Ymatrix, Zmatrix, Mhalo, Rvir, c)
 
 
-Toomre(SavedX, SavedY, Vx, Vy)
+Toomre(X, Y, Vx, Vy, Rmax, b)
 
 
 
@@ -654,3 +658,22 @@ Toomre(SavedX, SavedY, Vx, Vy)
 
 
 
+# x = SavedX[0]
+# y = SavedY[0]
+# vx = Vx[0]
+# vy = Vy[0]
+# R = np.sqrt(x**2 + y**2)
+#     #phi = np.arctan2(Y[0], X[0])
+    
+# Vr = (x*vx + y*vy)/R
+# vphi = (x*vy - y*vx)/R
+   
+    
+# nbins = 40
+# R_bins = np.linspace(0, Rmax, nbins+1)
+# R_centers = 0.5*(R_bins[:-1] + R_bins[1:])
+
+# len(R)
+# blah = (R >= R_bins[1]) & (R < R_bins[1+1])
+# R_bins[1]<R<R_bins[2]
+#print(R_bins[1] <= R < R_bins[1+1])

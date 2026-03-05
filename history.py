@@ -559,3 +559,8 @@ runcell(0, 'C:/Users/adidu/.spyder-py3/Computing Project Core.py')
 %runcell -i 0 'C:/Users/adidu/.spyder-py3/Disk generator Code.py'
 %runcell -i 0 'C:/Users/adidu/.spyder-py3/Disk with varied vels.py'
 %runcell -i 0 'C:/Users/adidu/.spyder-py3/Milky way diff integrator.py'
+
+## ---(Thu Mar  5 12:32:25 2026)---
+%runcell -i 0 'C:/Users/adidu/.spyder-py3/Disk with varied vels.py'
+%runcell -i 0 C:/Users/adidu/.spyder-py3/untitled2.py
+%runcell -i 0 'C:/Users/adidu/.spyder-py3/Disk with varied vels.py'
