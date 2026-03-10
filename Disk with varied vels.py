@@ -491,10 +491,10 @@ def EnergyPlotfrac(t, R, Mhalo, Rvir, c, SavedCOM, SavedX, SavedY, SavedZ, Vx, V
     axes[0].legend(fontsize=9)
     axes[1].legend(fontsize=9)
     #axes[2].legend()
-    fig.savefig(r'C:\Users\adidu\Documents\Work stuff\Year 3\Computing Project\Old Python Files\Energy Deviation from meanNbody.png', transparent=True)
+    fig.savefig(r'C:\Users\adidu\Documents\Work stuff\Year 3\Computing Project\Old Python Files\Energy Analysis.png', transparent=True)
     return Uavg, Kavg, Tavg, max_du, max_dk, max_de, max_dvir, max_dlz, ani_face, ani_edge, fig
 
-def Toomre(X, Y, Vx, Vy, Rmax, mass):
+def Toomre(X, Y, Vx, Vy, Rmax, mass, filename):
     x = X
     y = Y
     vx = Vx[0]
@@ -511,34 +511,21 @@ def Toomre(X, Y, Vx, Vy, Rmax, mass):
     R_centers = 0.5*(R_bins[:-1] + R_bins[1:])
     
     Sigma = np.zeros(nbins)
+    sigma_R = np.zeros(nbins)
+    vphi_mean = np.zeros(nbins)
     
     for i in range(nbins):
-        Mbin = np.sum(mass[
-            
-            (R >= R_bins[i])
-            & 
-            (R < R_bins[i+1])
-            
-            ])
+        
+        mask = (R >= R_bins[i]) & (R < R_bins[i+1])
+        
+        Mbin = np.sum(mass[mask])
+        
         area = np.pi * (R_bins[i+1]**2 - R_bins[i]**2)
         
         Sigma[i] = Mbin / area
-    
-    sigma_R = np.zeros(nbins)
-
-    for i in range(nbins):
-
-        mask = (R >= R_bins[i]) & (R < R_bins[i+1])
 
         if np.sum(mask) > 1:
             sigma_R[i] = np.std(Vr[mask])
-    
-    
-    vphi_mean = np.zeros(nbins)
-
-    for i in range(nbins):
-
-        mask = (R >= R_bins[i]) & (R < R_bins[i+1])
 
         if np.sum(mask) > 0:
             vphi_mean[i] = np.mean(vphi[mask])
@@ -557,14 +544,103 @@ def Toomre(X, Y, Vx, Vy, Rmax, mass):
     plt.axhline(2, linestyle=':')
     plt.xlabel('Radius (Kpc)')
     plt.ylabel('Toomre Q parameter')
+    plt.title("Toomre Q against radius")
+    plt.savefig(r'C:\Users\adidu\Documents\Work stuff\Year 3\Computing Project\Energy diagnostic plots\Toomre Analysis\\'
+                + filename, transparent=True)
     
     
+def Toomreheatmap(X, Y, Vx, Vy, Rmax, mass, filename):
+    x    = X
+    y    = Y
+    vx   = Vx[0]
+    vy   = Vy[0]
+    R    = np.sqrt(x**2 + y**2)
+    phi  = np.arctan2(y, x)
+    Vr   = (x*vx + y*vy)/R
+    vphi = (x*vy - y*vx)/R
     
+    
+    Nr   = 12
+    Nphi = 16
+    
+    R_edges   = np.linspace(0, Rmax, Nr+1)
+    phi_edges = np.linspace(-np.pi, np.pi, Nphi+1)
+    R_centers = 0.5*(R_edges[:-1] + R_edges[1:])
+    
+    Sigma     = np.zeros((Nr,Nphi))
+    sigma_R   = np.zeros((Nr,Nphi))
+    vphi_mean = np.zeros(Nr)
+    Q         = np.zeros((Nr,Nphi))
+    
+    
+    for i in range(Nr):
+
+        R_inner = R_edges[i]
+        R_outer = R_edges[i+1]
+        
+        mask1 = (R >= R_inner) & (R < R_outer)
+
+        for j in range(Nphi):
+
+            phi_inner = phi_edges[j]
+            phi_outer = phi_edges[j+1]
+
+            mask2 = (
+                (R >= R_inner) & (R < R_outer) &
+                (phi >= phi_inner) & (phi < phi_outer)
+                )
+    
+            A = 0.5 * (R_outer**2 - R_inner**2)*(phi_outer - phi_inner)
+            Mbin = np.sum(mass[mask2])
+            Sigma[i,j] = Mbin / A
+            
+            if np.sum(mask2) > 1:
+                sigma_R[i,j] = np.std(Vr[mask2])
+                
+        if np.sum(mask1) > 0:
+            vphi_mean[i] = np.mean(vphi[mask1])
+                
+    Omega = vphi_mean / R_centers
+    Omega2 = Omega**2
+    dOmega2_dR = np.gradient(Omega2, R_centers)
+
+    kappa = np.sqrt(4*Omega2 + R_centers*dOmega2_dR)
+    
+    for i in range(Nr):
+        for j in range(Nphi):
+            
+            if Sigma[i,j] > 0 and sigma_R[i,j] > 0:
+                Q[i,j] = sigma_R[i,j] * kappa[i] / (3.36 * G * Sigma[i,j])
+            else:
+                Q[i,j] = np.nan
+    
+    Phi, R = np.meshgrid(phi_edges, R_edges)        
+    fig, ax = plt.subplots(subplot_kw={'projection':'polar'}, figsize=(7,7))
+
+    pcm = ax.pcolormesh(Phi, R/Kpc, Q, cmap='inferno', shading='auto', vmin=0, vmax=3)
+
+    fig.colorbar(pcm, ax=ax, label='Toomre Q')
+    
+    ax.set_ylabel("Radius (kpc)")
+    
+    # ticks_kpc = [2,4,6,8,10,12]
+
+    # ax.set_yticks(np.array(ticks_kpc) * Kpc)
+    # ax.set_yticklabels(ticks_kpc)
+
+    # ax.set_rlabel_position(135)
+    ax.set_title("Toomre Q Disk Map")
+    fig.savefig(r'C:\Users\adidu\Documents\Work stuff\Year 3\Computing Project\Energy diagnostic plots\Toomre Analysis\\'
+                + filename, transparent=True)
+            
+
+
+
 Msol            = 1.989e+30
 Kpc             = 3.086e+19
 Myr             = 3600 * 24 * 365 * 1e6
 
-N               = 2000              # Number of bodies
+N               = 4000              # Number of bodies
 Rd              = 1.3 * 2.15 * Kpc  # Scale length
 Rmax            = 5 * Rd            # Truncation Radius
 z0              = 0.3 * Kpc         # Thickness of the disk
@@ -577,7 +653,7 @@ Mstel_effective = 0.9 * Mstel       # Effective stellar mass in simulation
 
 e               = 0.3 * Kpc         # softening
 c               = 9.4               # halo concentration
-sigma_R_factor  = 0.6              # radial velocity dispersion
+sigma_R_factor  = 0.30              # radial velocity dispersion
 sigma_z_factor  = 0.1               # vertical velocity dispersion
 
 
@@ -630,22 +706,41 @@ SavedCOM, SavedX, SavedY, SavedZ, Vx, Vy, Vz, mass, SavedSteps, Rs, rho0 = HugeF
     
 #     )
 
-#print("Mean Kinetic:", Kavg)
-#print("Mean Potential:", Uavg)
-#print("Mean Total:", Tavg)
-#print("Max Energy Fractional Difference:", max_de)
-#print("Max Kinetic Fractional Difference:", max_dk)
-#print("Max Potential Fractional Difference:", max_du)
-#print("Max Virial Residue:", max_dvir)
-#print("Max Angular Momentum Fractional Difference:", max_dlz)
+# print("Mean Kinetic:", Kavg)
+# print("Mean Potential:", Uavg)
+# print("Mean Total:", Tavg)
+# print("Max Energy Fractional Difference:", max_de)
+# print("Max Kinetic Fractional Difference:", max_dk)
+# print("Max Potential Fractional Difference:", max_du)
+# print("Max Virial Residue:", max_dvir)
+# print("Max Angular Momentum Fractional Difference:", max_dlz)
 
 
 #print(SavedX)
 #rhor = HaloAccel(Xmatrix, Ymatrix, Zmatrix, Mhalo, Rvir, c)
 
+filename1 = "Toomre radial plot (4000p).png"
+filename2 = "Toomre Heatmap (4000p).png"
 
-Toomre(X, Y, Vx, Vy, Rmax, b)
+Toomre(X, Y, Vx, Vy, Rmax, b, filename1)
+Toomreheatmap(X, Y, Vx, Vy, Rmax, b, filename2)
 
+fig = plt.figure(figsize=(10, 10))
+ax = fig.add_subplot(projection='3d')
+ax.set_box_aspect([1, 1, 1])
+L = 1 * Rmax / Kpc
+ax.set_xlim(-L, L)
+ax.set_ylim(-L, L)
+ax.set_zlim(-L, L)
+ax.set_xticks([-L, 0, L])
+ax.set_yticks([-L, 0, L])
+ax.set_zticks([-L, 0, L])
+ax.view_init(elev=90, azim=90)
+ax.scatter(X/Kpc,Y/Kpc,Z/Kpc, s=3)
+plt.show()
+
+fig.savefig(r'C:\Users\adidu\Documents\Work stuff\Year 3\Computing Project\Energy diagnostic plots\Toomre Analysis\\'
+            + "4000p positions.png", transparent=True)
 
 
 # """
@@ -654,26 +749,3 @@ Toomre(X, Y, Vx, Vy, Rmax, b)
 # ALSO REMEMBER TO CHANGE THE INITIAL VELS CALC IN THE BIG FUNC ANDDDD THE ACCEL CALC WHEN IM INCULDING THE HALO AND NOT
 
 # """
-
-
-
-
-# x = SavedX[0]
-# y = SavedY[0]
-# vx = Vx[0]
-# vy = Vy[0]
-# R = np.sqrt(x**2 + y**2)
-#     #phi = np.arctan2(Y[0], X[0])
-    
-# Vr = (x*vx + y*vy)/R
-# vphi = (x*vy - y*vx)/R
-   
-    
-# nbins = 40
-# R_bins = np.linspace(0, Rmax, nbins+1)
-# R_centers = 0.5*(R_bins[:-1] + R_bins[1:])
-
-# len(R)
-# blah = (R >= R_bins[1]) & (R < R_bins[1+1])
-# R_bins[1]<R<R_bins[2]
-#print(R_bins[1] <= R < R_bins[1+1])
